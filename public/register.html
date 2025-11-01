@@ -12,10 +12,16 @@
             --dark-blue: #0D47A1;
             --red-accent: #dc3545;
             --white: #ffffff;
-            --dark-blue-form: #1565C0;
+            --dark-blue-form: #1565C0; /* No se usa para el fondo, pero sí para el texto */
             --dark-blue-input: #1E88E5;
             --blue-border: #42A5F5;
             --green-success: #28a745;
+            
+            /* --- Nuevos colores para el tema blanco --- */
+            --color-texto-oscuro: #212121;
+            --color-texto-secundario: #666;
+            --color-fondo-input: #f4f4f4;
+            --color-borde-input: #ccc;
         }
 
         * { box-sizing: border-box; }
@@ -24,7 +30,7 @@
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 40px 20px; /* Padding para scroll en móvil */
-            background-color: var(--dark-blue);
+            background-color: var(--dark-blue); /* <-- FONDO AZUL (Solicitado) */
             color: var(--white);
             display: flex;
             justify-content: center;
@@ -33,34 +39,27 @@
             flex-direction: column;
         }
 
-        /* Logo del Hospital */
-        .login-logo {
-            width: 150px;
-            height: auto;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
-        }
-
+        /* Logo del Hospital (ELIMINADO DEL HTML) */
+        
         /* Contenedor Principal del Formulario */
         .register-container {
-            background-color: var(--dark-blue-form);
+            background-color: var(--white); /* <-- CUADRO BLANCO (Solicitado) */
             padding: 30px 40px;
             border-radius: 12px;
-            box-shadow: 
-                0 15px 30px rgba(0, 0, 0, 0.5), 
-                inset 0 0 20px rgba(255, 255, 255, 0.15); 
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
             width: 100%;
             max-width: 650px; /* Más ancho para el registro */
             position: relative; 
+            color: var(--color-texto-oscuro); /* <-- Texto oscuro por defecto */
         }
 
         /* Títulos */
         .register-container h1 {
             text-align: center;
-            color: var(--white);
+            color: var(--dark-blue); /* <-- Texto azul oscuro */
             margin-top: 10px;
             margin-bottom: 25px;
-            text-shadow: 0 3px 5px rgba(0, 0, 0, 0.6);
+            text-shadow: none; /* <-- Sin sombra de texto */
             font-size: 2em;
         }
 
@@ -72,17 +71,18 @@
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
+            color: var(--color-texto-oscuro); /* <-- Texto oscuro */
         }
 
         /* Estilo general de inputs y selects */
         input, select {
             width: 100%;
             padding: 12px;
-            border: 1px solid var(--blue-border);
+            border: 1px solid var(--color-borde-input); /* <-- Borde gris */
             border-radius: 6px;
             box-sizing: border-box;
-            background-color: var(--dark-blue-input); 
-            color: var(--white);
+            background-color: var(--color-fondo-input); /* <-- Fondo gris claro */
+            color: var(--color-texto-oscuro); /* <-- Texto oscuro */
             transition: border-color 0.3s;
             font-size: 1em;
         }
@@ -91,7 +91,7 @@
             outline: none;
             box-shadow: 0 0 8px rgba(220, 53, 69, 0.5); 
         }
-        ::placeholder { color: #BBDEFB; opacity: 0.9; }
+        ::placeholder { color: var(--color-texto-secundario); opacity: 0.9; } /* <-- Placeholder gris */
 
         /* Layout de 2 Columnas */
         .form-row {
@@ -129,25 +129,25 @@
             right: 12px;
             top: 50%;
             transform: translateY(-50%);
-            color: #BBDEFB;
+            color: var(--color-texto-secundario); /* <-- Icono gris */
             cursor: pointer;
             z-index: 10;
         }
         
-        /* --- NUEVO: Requisitos de Contraseña --- */
+        /* --- Requisitos de Contraseña --- */
         .password-reqs {
             list-style-type: none;
             padding: 0;
             margin: 10px 0;
             font-size: 0.9em;
-            color: #BBDEFB;
+            color: var(--color-texto-secundario); /* <-- Texto gris */
         }
         .password-reqs li {
             margin-bottom: 4px;
             transition: color 0.3s;
         }
         .password-reqs li.valid {
-            color: var(--green-success); /* Verde */
+            color: var(--green-success); /* Verde (se mantiene) */
             text-decoration: line-through;
         }
         .password-reqs li i {
@@ -184,7 +184,7 @@
             top: 20px;
             left: 20px;
             font-size: 28px;
-            color: var(--red-accent);
+            color: var(--red-accent); /* <-- Rojo sobre blanco (visible) */
             text-decoration: none;
         }
         .back-arrow:hover { color: #ff6b7b; }
@@ -213,10 +213,10 @@
             text-align: center;
             margin-top: 25px;
             font-size: 1em;
-            color: #BBDEFB;
+            color: #555; /* <-- Texto gris oscuro */
         }
         .login-link a {
-            color: var(--white);
+            color: var(--dark-blue); /* <-- Enlace azul */
             font-weight: bold;
             text-decoration: none;
         }
@@ -224,16 +224,21 @@
         /* Estilos de Campos de Doctor */
         .doctor-fields {
             padding: 20px;
-            border: 1px dashed var(--blue-border);
+            border: 1px dashed var(--dark-blue); /* <-- Borde azul */
             border-radius: 8px;
             margin-top: 20px;
-            background-color: rgba(13, 71, 161, 0.2); /* Fondo azul transparente */
+            background-color: #f0f8ff; /* <-- Fondo azul muy claro */
         }
         .doctor-fields h3 {
             margin-top: 0;
-            color: var(--white);
-            border-bottom: 1px solid var(--blue-border);
+            color: var(--dark-blue); /* <-- Título azul */
+            border-bottom: 1px solid var(--color-borde-input); /* <-- Borde gris */
             padding-bottom: 10px;
+        }
+        .doctor-fields p {
+            font-size: 0.85em;
+            color: #444; /* <-- Texto oscuro */
+            opacity: 1;
         }
         
         /* Responsive (Teléfono) */
@@ -248,9 +253,7 @@
             .form-group {
                 margin-bottom: 15px;
             }
-            .login-logo {
-                width: 120px;
-            }
+            /* Regla del logo eliminada */
             .register-container h1 {
                 font-size: 1.8em;
             }
@@ -259,8 +262,6 @@
 </head>
 <body>
     
-    <img src="hospital.png" alt="Logo Hospital" class="login-logo">
-
     <div class="register-container">
         
         <a href="login.html" class="back-arrow" title="Volver a Iniciar Sesión">
@@ -297,12 +298,12 @@
                             <option value="V">V</option>
                             <option value="E">E</option>
                         </select>
-                        <input type="text" id="cedula" name="cedula" required placeholder="Ej: 12345678">
+                        <input type="text" id="cedula" name="cedula" required placeholder="Ej: 21555888">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" required placeholder="ejemplo@correo.com">
+                    <input type="email" id="email" required placeholder="usuario@gmail.com">
                 </div>
             </div>
 
@@ -334,13 +335,13 @@
                     </div>
                     
                     <label for="telefono" style="margin-top: 15px;">Teléfono</label>
-                    <input type="text" id="telefono" title="Ej: 04121234567" required placeholder="Ej: 04121234567">
+                    <input type="text" id="telefono" title="Ej: 04246012345" required placeholder="Ej: 04246012345">
                 </div>
             </div>
             
             <div class="form-group">
                 <label for="direccion_base">Dirección Base (Ciudad/Estado)</label>
-                <input type="text" id="direccion_base" placeholder="Ej: Cabimas, Zulia" required>
+                <input type="text" id="direccion_base" placeholder="Ej: Maracaibo, Zulia" required>
             </div>
             
             <div id="doctor-fields" class="doctor-fields" style="display: none;">
@@ -348,7 +349,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="id_colegiatura">Matrícula MPPS / ID Colegio</label>
-                        <input type="text" id="id_colegiatura" placeholder="MPPS XXXXXXX"> 
+                        <input type="text" id="id_colegiatura" placeholder="MPPS 123456"> 
                     </div>
                     <div class="form-group">
                         <label for="especialidad">Especialidad</label>
@@ -356,7 +357,7 @@
                             </select>
                     </div>
                 </div>
-                <p style="font-size: 0.85em; color: var(--white); opacity: 0.9;">
+                <p>
                     * Su cuenta de Doctor estará en estado **PENDIENTE** hasta que el Administrador la active.
                 </p>
             </div>
@@ -405,7 +406,7 @@
                 const isDoctor = rolSelect.value === 'Doctor';
                 doctorFields.style.display = isDoctor ? 'block' : 'none';
                 matriculaInput.required = isDoctor;
-                especialidadSelect.required = isDoctor;
+                especialidadSelect.required = isDDoctor;
                 if (!isDoctor) {
                     matriculaInput.value = '';
                     especialidadSelect.value = '';
@@ -529,7 +530,18 @@
                     const result = await response.json();
 
                     if (response.ok) {
-                        showFeedback(result.msg + '. Redirigiendo al inicio de sesión...', 'success');
+                        
+                        // --- INICIO DE MODIFICACIÓN (Solicitado) ---
+                        let successMessage;
+                        if (rol === 'Doctor') {
+                            successMessage = '¡Registro exitoso! Su cuenta está pendiente de activación.';
+                        } else {
+                            successMessage = result.msg; // "Registro exitoso."
+                        }
+                        
+                        showFeedback(successMessage + ' Redirigiendo al inicio de sesión...', 'success');
+                        // --- FIN DE MODIFICACIÓN ---
+                        
                         setTimeout(() => {
                             window.location.href = 'login.html';
                         }, 3000);
