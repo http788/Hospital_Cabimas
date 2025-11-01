@@ -421,7 +421,7 @@ app.post('/api/auth/register', async (req, res) => {
             // Ahora insertamos el ID (fk_especialidad_id) en la columna 'especialidad' de 'doctores'
             await pool.query(
                 'INSERT INTO doctores (fk_usuario, id_colegiatura, especialidad, estado) VALUES ($1, $2, $3, $4)',
-                [id_usuario, id_colegiatura, fk_especialidad_id, 'Pendiente'] // Usamos el ID
+                [id_usuario, id_colegiatura, especialidad, 'Pendiente'] // Usamos el ID
             );
             // --- FIN DE CORRECCIÓN ---           
              // 
