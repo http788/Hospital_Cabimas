@@ -12,7 +12,7 @@
             --dark-blue: #0D47A1;
             --red-accent: #dc3545;
             --white: #ffffff;
-            --dark-blue-form: #1565C0; /* No se usa para el fondo, pero sí para el texto */
+            --dark-blue-form: #1565C0; 
             --dark-blue-input: #1E88E5;
             --blue-border: #42A5F5;
             --green-success: #28a745;
@@ -29,7 +29,7 @@
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
-            padding: 40px 20px; /* Padding para scroll en móvil */
+            padding: 40px 20px; 
             background-color: var(--dark-blue); /* <-- FONDO AZUL (Solicitado) */
             color: var(--white);
             display: flex;
@@ -39,8 +39,6 @@
             flex-direction: column;
         }
 
-        /* Logo del Hospital (ELIMINADO DEL HTML) */
-        
         /* Contenedor Principal del Formulario */
         .register-container {
             background-color: var(--white); /* <-- CUADRO BLANCO (Solicitado) */
@@ -48,7 +46,7 @@
             border-radius: 12px;
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
             width: 100%;
-            max-width: 650px; /* Más ancho para el registro */
+            max-width: 650px; 
             position: relative; 
             color: var(--color-texto-oscuro); /* <-- Texto oscuro por defecto */
         }
@@ -59,7 +57,7 @@
             color: var(--dark-blue); /* <-- Texto azul oscuro */
             margin-top: 10px;
             margin-bottom: 25px;
-            text-shadow: none; /* <-- Sin sombra de texto */
+            text-shadow: none; 
             font-size: 2em;
         }
 
@@ -147,7 +145,7 @@
             transition: color 0.3s;
         }
         .password-reqs li.valid {
-            color: var(--green-success); /* Verde (se mantiene) */
+            color: var(--green-success); 
             text-decoration: line-through;
         }
         .password-reqs li i {
@@ -184,7 +182,7 @@
             top: 20px;
             left: 20px;
             font-size: 28px;
-            color: var(--red-accent); /* <-- Rojo sobre blanco (visible) */
+            color: var(--red-accent);
             text-decoration: none;
         }
         .back-arrow:hover { color: #ff6b7b; }
@@ -253,7 +251,6 @@
             .form-group {
                 margin-bottom: 15px;
             }
-            /* Regla del logo eliminada */
             .register-container h1 {
                 font-size: 1.8em;
             }
@@ -401,12 +398,16 @@
                 symbol: /[@$!%*?&]/
             };
 
-            // --- Lógica de Toggle de Campos de Doctor ---
+            // --- Lógica de Toggle de Campos de Doctor (CORREGIDA) ---
             function toggleDoctorFields() {
                 const isDoctor = rolSelect.value === 'Doctor';
                 doctorFields.style.display = isDoctor ? 'block' : 'none';
+                
+                // --- CORRECCIÓN CRÍTICA APLICADA: Marcar como required ---
                 matriculaInput.required = isDoctor;
-                especialidadSelect.required = isDDoctor;
+                especialidadSelect.required = isDoctor;
+                // --- FIN CORRECCIÓN ---
+                
                 if (!isDoctor) {
                     matriculaInput.value = '';
                     especialidadSelect.value = '';
@@ -512,10 +513,13 @@
                 if (rol === 'Doctor') {
                     data.id_colegiatura = matriculaInput.value.trim();
                     data.especialidad = especialidadSelect.value;
+                    // Ya no se necesita esta validación si el required en HTML y JS funciona:
+                    /*
                     if (!data.id_colegiatura || !data.especialidad) {
                         showFeedback('Error: Complete los campos de Matrícula y Especialidad.', 'error');
                         return;
                     }
+                    */
                 }
                 
                 showFeedback('Procesando registro...', 'success');
@@ -531,16 +535,15 @@
 
                     if (response.ok) {
                         
-                        // --- INICIO DE MODIFICACIÓN (Solicitado) ---
                         let successMessage;
                         if (rol === 'Doctor') {
+                            // Mensaje profesional solicitado
                             successMessage = '¡Registro exitoso! Su cuenta está pendiente de activación.';
                         } else {
-                            successMessage = result.msg; // "Registro exitoso."
+                            successMessage = result.msg; 
                         }
                         
                         showFeedback(successMessage + ' Redirigiendo al inicio de sesión...', 'success');
-                        // --- FIN DE MODIFICACIÓN ---
                         
                         setTimeout(() => {
                             window.location.href = 'login.html';
