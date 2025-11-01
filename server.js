@@ -2855,6 +2855,7 @@ app.get('/api/admin/camas', auth(['Administrador']), async (req, res) => {
 });
 
 // 3. RUTA: PUT /api/admin/camas/:id_cama (Actualizar Estado, Ocupar, Liberar)
+// --- CÓDIGO CORREGIDO ---
 app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) => {
     const { id_cama } = req.params;
     const { estado, fk_paciente_actual, motivo_ingreso, fk_doctor_acargo } = req.body; 
@@ -2863,54 +2864,54 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
         return res.status(400).json({ msg: "El nuevo estado de la cama es requerido." });
     }
     
-    // Lógica de Liberación/Limpieza
-    if (estado !== 'Ocupada') {
-        try {
-            // Limpia todos los campos de paciente Y la fecha de ingreso
+    // --- INICIO DE CORRECCIÓN: El 'try' ahora engloba TODA la lógica ---
+    try {
+        
+        // Lógica de Liberación/Limpieza
+        if (estado !== 'Ocupada') {
             await pool.query(
                 `UPDATE camas SET 
                     estado = $1, 
                     fk_paciente_actual = NULL, 
                     motivo_ingreso = NULL, 
                     fk_doctor_acargo = NULL,
-                    fecha_ingreso = NULL -- <-- AÑADIDO
+                    fecha_ingreso = NULL
                  WHERE id_cama = $2`,
                 [estado, id_cama]
             );
             return res.json({ msg: `Cama ${id_cama} actualizada. Estado: ${estado}` });
-        } catch (error) {
-            console.error('Error al liberar cama:', error.message);
-            return res.status(500).json({ msg: "Error interno del servidor al liberar la cama." });
         }
-    }
 
-    // Lógica para OCUPADA (Mapeo de ID_USUARIO a ID_PACIENTE/ID_DOCTOR)
-    let pacienteIdEnTablaPacientes = null;
-    if (fk_paciente_actual) {
-        const pacienteResult = await pool.query('SELECT id_paciente FROM pacientes WHERE fk_usuario = $1', [fk_paciente_actual]);
-        if (pacienteResult.rows.length === 0) {
-            return res.status(400).json({ msg: "ID de Paciente (usuario) no válido o no está registrado como tal." });
+        // --- Lógica para OCUPADA (Ahora dentro del try...catch) ---
+        
+        // 1. Mapear ID de Usuario (Paciente) a id_paciente
+        let pacienteIdEnTablaPacientes = null;
+        if (fk_paciente_actual) {
+            const pacienteResult = await pool.query('SELECT id_paciente FROM pacientes WHERE fk_usuario = $1', [fk_paciente_actual]);
+            if (pacienteResult.rows.length === 0) {
+                return res.status(400).json({ msg: "ID de Paciente (usuario) no válido o no está registrado como tal." });
+            }
+            pacienteIdEnTablaPacientes = pacienteResult.rows[0].id_paciente;
         }
-        pacienteIdEnTablaPacientes = pacienteResult.rows[0].id_paciente;
-    }
-    
-    let doctorIdEnTablaDoctores = null;
-    if (fk_doctor_acargo) {
-        const doctorResult = await pool.query('SELECT id_doctor FROM doctores WHERE fk_usuario = $1', [fk_doctor_acargo]);
-        if (doctorResult.rows.length === 0) {
-            return res.status(400).json({ msg: "ID de Doctor (usuario) no válido o no está registrado como tal." });
+        
+        // 2. Mapear ID de Usuario (Doctor) a id_doctor
+        let doctorIdEnTablaDoctores = null;
+        if (fk_doctor_acargo) {
+            const doctorResult = await pool.query('SELECT id_doctor FROM doctores WHERE fk_usuario = $1', [fk_doctor_acargo]);
+            if (doctorResult.rows.length === 0) {
+                return res.status(400).json({ msg: "ID de Doctor (usuario) no válido o no está registrado como tal." });
+            }
+            doctorIdEnTablaDoctores = doctorResult.rows[0].id_doctor;
         }
-        doctorIdEnTablaDoctores = doctorResult.rows[0].id_doctor;
-    }
 
-    try {
+        // 3. Ejecutar la actualización
         const query = `
             UPDATE camas 
             SET estado = $1, 
                 fk_paciente_actual = $2, 
                 motivo_ingreso = $3, 
                 fk_doctor_acargo = $4,
-                fecha_ingreso = NOW() -- <-- AÑADIDO: Setea la fecha de ingreso al ocupar
+                fecha_ingreso = NOW()
             WHERE id_cama = $5
             RETURNING *;
         `;
@@ -2924,6 +2925,7 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
         res.json({ msg: "Cama actualizada exitosamente", cama: result.rows[0] });
 
     } catch (error) {
+        // --- FIN DE CORRECCIÓN: Ahora esto captura TODOS los errores ---
         console.error('Error al actualizar cama:', error.message);
         res.status(500).json({ msg: "Error interno del servidor al actualizar la cama." });
     }
@@ -2939,77 +2941,7 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
  
  
  
- 
 
-// Ruta: POST /api/admin/inventario
-// Propósito: Añade un nuevo medicamento o recurso disponible al inventario.
-// Requiere: { nombre, principio_activo, concentracion, stock_actual, stock_minimo, fecha_vencimiento, tipo_recurso }
-app.post('/api/admin/inventario', auth(['Administrador']), async (req, res) => {
-    // Nota: Añadimos 'tipo_recurso' para distinguir entre Medicamento y Otros.
-    const { nombre, principio_activo, concentracion, stock_actual, stock_minimo, fecha_vencimiento, tipo_recurso } = req.body;
-    
-    // Validación básica de campos requeridos
-    if (!nombre || !stock_actual || !stock_minimo) {
-        return res.status(400).json({ msg: 'Faltan campos obligatorios para el inventario.' });
-    }
-    
-    try {
-        await pool.query(
-            // Asumiendo que 'inventario_medicamentos' se llama realmente 'inventario_recursos' o se utiliza para ambos
-            `INSERT INTO inventario_medicamentos (
-                nombre, principio_activo, concentracion, 
-                stock_actual, stock_minimo, fecha_vencimiento, tipo_recurso
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [nombre, principio_activo, concentracion, stock_actual, stock_minimo, fecha_vencimiento, tipo_recurso || 'Medicamento']
-        );
-        res.status(201).json({ msg: `${nombre} añadido al inventario.` });
-    } catch (err) {
-        console.error('Error al añadir inventario:', err.message);
-        res.status(500).send('Error del servidor al registrar recurso.');
-    }
-});
-
-// Ruta: GET /api/admin/inventario
-// Propósito: Obtener toda la lista del inventario.
-app.get('/api/admin/inventario', auth(['Administrador']), async (req, res) => {
-    try {
-        const inventario = await pool.query(`
-            SELECT 
-                *,
-                CASE 
-                    WHEN stock_actual <= stock_minimo THEN 'Alerta Baja'
-                    ELSE 'Stock Suficiente'
-                END AS estado_alerta
-            FROM inventario_medicamentos 
-            ORDER BY nombre ASC
-        `);
-        res.json(inventario.rows);
-    } catch (err) {
-        console.error('Error al obtener inventario:', err.message);
-        res.status(500).send('Error del servidor.');
-    }
-});
-
-// Ruta: PUT /api/admin/inventario/:id_item
-// Propósito: Actualizar un ítem específico del inventario (ej. aumentar/disminuir stock).
-app.put('/api/admin/inventario/:id_item', auth(['Administrador']), async (req, res) => {
-    const { id_item } = req.params;
-    const { stock_actual, stock_minimo, fecha_vencimiento } = req.body;
-    
-    // Solo actualizamos campos específicos por simplicidad
-    try {
-        await pool.query(
-            `UPDATE inventario_medicamentos 
-             SET stock_actual = $1, stock_minimo = $2, fecha_vencimiento = $3 
-             WHERE id_item = $4`,
-            [stock_actual, stock_minimo, fecha_vencimiento, id_item]
-        );
-        res.json({ msg: `Item ${id_item} de inventario actualizado.` });
-    } catch (err) {
-        console.error('Error al actualizar inventario:', err.message);
-        res.status(500).send('Error del servidor.');
-    }
-});
 
 // ==============================================================================
 // GESTIÓN DE ALERTAS EPIDEMIOLÓGICAS (AJUSTADA A TU SQL)
