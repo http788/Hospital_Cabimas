@@ -408,7 +408,8 @@
         const { jsPDF } = window.jspdf;
         // ----------------------------------------
     
-        const API_BASE = 'http://localhost:3000/api/doctor';
+        // ESTO ES LO QUE DEBES PONER (CORRECTO)
+        const API_BASE = '/api/doctor';
         const contentArea = document.getElementById('content-area');
         let doctorProfileData = null; // Variable global para guardar datos del perfil
         let currentPrescriptionLines = []; // Array para guardar líneas de prescripción
@@ -1423,4 +1424,5 @@
 
     </script>
 </body>
+
 </html>
