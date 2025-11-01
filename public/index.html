@@ -380,10 +380,17 @@
         /* --- RESPONSIVIDAD (Móvil) --- */
         @media (max-width: 900px) {
             #hero {
-                grid-template-columns: 1fr;
+                /* grid-template-columns: 1fr; <-- ELIMINADO (CORRECCIÓN) */
                 text-align: center;
                 padding-top: 60px;
             }
+
+            /* --- INICIO DE CORRECCIÓN (Solicitado) --- */
+            .hero-grid {
+                grid-template-columns: 1fr; /* Apila el texto y la imagen */
+            }
+            /* --- FIN DE CORRECCIÓN --- */
+
             .hero-text h2 { font-size: 2.2em; }
             .mision-vision-grid, .features-grid, .noticias-grid {
                 grid-template-columns: 1fr; /* Apilar todo a 1 columna */
@@ -478,7 +485,7 @@
             <div class="container">
                 <h2><i class="fas fa-seedling"></i> Programa de Nutrición Renal</h2>
                 <p>El acceso a una nutrición especializada es un derecho. Ofrecemos un programa de apoyo integral y gratuito para pacientes con enfermedad renal.</p>
-                <a href="https://www.who.int/es/news-room/fact-sheets/detail/healthy-diet" target="_blank" class="btn-rojo">Conocer Más del Programa</a>
+                <a href="httpsa://www.who.int/es/news-room/fact-sheets/detail/healthy-diet" target="_blank" class="btn-rojo">Conocer Más del Programa</a>
             </div>
         </section>
 
