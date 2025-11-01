@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expediente Clínico - Hospital Dr. Adolfo D' Empaire</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-principal: #0D47A1;
+            --color-acento: #D32F2F;
+            --color-fondo: #F5F5F5;
+            --color-texto-claro: #FFFFFF;
+            --color-texto-oscuro: #212121;
+        }
+        body { font-family: 'Arial', sans-serif; background-color: var(--color-fondo); margin: 0; }
+        #doctor-wrapper { display: flex; min-height: 100vh; }
+        
+        /* --- ESTILOS RESPONSIVE (MENÚ HAMBURGUESA) --- */
+        #sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, var(--color-principal) 0%, #003366 100%);
+            color: var(--color-texto-claro);
+            padding: 20px 0;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
+            transition: margin-left 0.3s ease-out;
+            z-index: 100;
+        }
+        #sidebar h2 { 
+            text-align: center; margin-bottom: 10px; padding: 0 15px;
+            color: var(--color-texto-claro);
+        }
+        #sidebar #doctor-info {
+            text-align: center; padding: 0 15px; margin-bottom: 20px;
+            border-bottom: 2px solid var(--color-acento); padding-bottom: 20px;
+        }
+        #sidebar #doctor-name { font-size: 1.1em; font-weight: bold; }
+        #sidebar #doctor-spec { font-size: 0.9em; color: #bbdefb; }
+        
+        #sidebar a {
+            display: flex; align-items: center; padding: 15px 20px;
+            color: var(--color-texto-claro); text-decoration: none;
+            transition: background 0.3s; font-weight: bold;
+            border-left: 5px solid transparent;
+        }
+        #sidebar a i { margin-right: 15px; width: 20px; }
+        #sidebar a:hover, #sidebar a.active {
+            background-color: #1565C0; 
+            border-left: 5px solid var(--color-acento);
+        }
+        .logout-menu-item { background-color: #8D021F !important; margin-top: 30px;}
+        .logout-menu-item:hover { background-color: var(--color-acento) !important; }
+
+        /* Contenido Principal */
+        #main-content {
+            flex-grow: 1;
+            padding: 40px;
+            padding-top: 80px; 
+        }
+        #main-content h1 { 
+            color: var(--color-principal); margin-bottom: 25px; 
+            border-bottom: 2px solid var(--color-acento); padding-bottom: 10px;
+        }
+        
+        /* Header Fijo para Móvil (Botón Hamburguesa) */
+        .header-mobile {
+            display: none; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 90;
+            align-items: center;
+        }
+        .menu-toggle {
+            font-size: 1.8em;
+            cursor: pointer;
+            color: var(--color-principal); 
+            margin-right: 15px;
+        }
+        .header-mobile h1 {
+            font-size: 1.3em;
+            color: var(--color-principal);
+            margin: 0;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+            display: none; 
+        }
+
+        @media (max-width: 900px) {
+            #sidebar {
+                position: fixed;
+                height: 100%;
+                margin-left: -250px; 
+            }
+            #sidebar.open {
+                margin-left: 0; 
+            }
+            .header-mobile {
+                display: flex;
+            }
+            #main-content {
+                padding: 20px;
+                padding-top: 90px;
+            }
+            .overlay.open {
+                display: block;
+            }
+            .ece-dashboard { /* Ajuste del dashboard en móvil */
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+            }
+            .dashboard-item {
+                padding: 15px 5px !important;
+                font-size: 0.9em !important;
+            }
+            .form-grid {
+                 grid-template-columns: 1fr !important;
+            }
+        }
+        
+        /* Formularios y Tablas */
+        .form-container {
+            background: white; padding: 30px; border-radius: 10px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 800px;
+        }
+        .form-container label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        .form-container input[type="text"],
+        .form-container input[type="date"],
+        .form-container input[type="file"],
+        .form-container select,
+        .form-container textarea {
+            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc;
+            border-radius: 6px; box-sizing: border-box; font-size: 1em;
+        }
+        .form-container button {
+            background-color: var(--color-principal); color: var(--color-texto-claro); border: none; padding: 12px 20px; 
+            border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold; font-size: 1em; 
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: var(--color-principal); color: var(--color-texto-claro); }
+        tr:hover { background-color: #f1f1f1; }
+        .empty-table { text-align: center; color: #777; font-style: italic; padding: 20px; }
+        .btn-rojo {
+            background: var(--color-acento); color: var(--color-texto-claro); padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); transition: background 0.3s;
+        }
+        .btn-principal {
+            background: var(--color-principal); color: var(--color-texto-claro); padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); transition: background 0.3s; margin-right: 5px;
+        }
+        
+        /* Modal */
+        #modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); z-index: 1000;
+            display: none; justify-content: center; align-items: center;
+        }
+        #modal-content {
+            background: white; padding: 30px; border-radius: 10px;
+            width: 90%; max-width: 700px; /* Más ancho para el historial */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease-out;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #modal-content h2 { color: var(--color-principal); margin-top: 0; }
+        #modal-body p {
+            margin: 5px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+        #modal-body h3 {
+             color: var(--color-principal); margin-top: 20px; 
+             border-bottom: 1px solid #ccc; padding-bottom: 5px;
+        }
+         #modal-body h3:first-of-type {
+             margin-top: 0;
+         }
+        #modal-body h3 i {
+            margin-right: 8px;
+        }
+        #modal-body p strong { 
+            color: var(--color-texto-oscuro); 
+            min-width: 150px; 
+            display: inline-block;
+        }
+        #modal-body h3.emergencia {
+             color: var(--color-acento);
+        }
+        
+        /* --- ESTILOS DEL ECE DASHBOARD (BASADO EN TU IMAGEN) --- */
+        #ece-dashboard-container {
+            display: none; /* Oculto hasta que se seleccione paciente */
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        #ece-patient-name {
+            color: var(--color-acento); 
+            border-bottom: 1px solid #ccc; 
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .ece-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 20px;
+        }
+        .dashboard-item {
+            background: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .dashboard-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            border-color: var(--color-principal);
+        }
+        .dashboard-item i {
+            font-size: 2.5em;
+            color: var(--color-principal);
+        }
+        .dashboard-item span {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            color: var(--color-texto-oscuro);
+        }
+        
+        /* Notificación Profesional (Toast) */
+        #toast-notification {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 2000;
+            transition: bottom 0.5s ease-in-out;
+            font-weight: bold;
+        }
+        #toast-notification.show {
+            bottom: 30px;
+        }
+        #toast-notification.success {
+            background-color: #28A745;
+        }
+        #toast-notification.error {
+            background-color: var(--color-acento);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-mobile">
+        <i class="fas fa-bars menu-toggle" onclick="toggleMenu()"></i>
+        <h1 id="mobile-header-title">Expediente Clínico</h1>
+    </div>
+
+    <div id="doctor-wrapper">
+        <div id="sidebar">
+            <h2><i class="fas fa-user-md"></i> Panel de Doctor</h2>
+            
+            <div id="doctor-info">
+                <div id="doctor-name">Cargando...</div>
+                <div id="doctor-spec">Cargando...</div>
+            </div>
+            
+            <a href="doctor.html#mi-perfil">
+                <i class="fas fa-user-circle"></i> Mi Perfil
+            </a>
+            <a href="doctor.html#horario">
+                <i class="fas fa-calendar-alt"></i> Mi Horario
+            </a>
+            <a href="doctor.html#citas-pendientes">
+                <i class="fas fa-clock"></i> Citas Pendientes
+            </a>
+            <a href="doctor.html#citas-aceptadas">
+                <i class="fas fa-calendar-check"></i> Citas Aceptadas
+            </a>
+            <a href="doctor.html#registrar-visita">
+                <i class="fas fa-file-medical"></i> Registrar Visita
+            </a>
+            <a href="expediente.html" class="active">
+                <i class="fas fa-book-medical"></i> Expediente Clínico
+            </a>
+            
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+            <a href="doctor.html#configuracion">
+                <i class="fas fa-cog"></i> Configuración
+            </a>
+            
+            <a href="#" class="logout-menu-item" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+            </a>
+            </div>
+
+        <div id="main-content">
+            <div id="content-area">
+                </div>
+        </div>
+    </div>
+
+    <div id="modal-backdrop" onclick="closeModal()">
+        <div id="modal-content" onclick="event.stopPropagation();">
+            <h2 id="modal-title">Detalle</h2>
+            <div id="modal-body">
+                </div>
+            <button class="btn-rojo" style="margin-top: 20px;" onclick="closeModal()">Cerrar</button>
+        </div>
+    </div>
+    
+    <div id="toast-notification">Mensaje</div>
+    
+    <div class="overlay" onclick="toggleMenu()"></div>
+
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api/doctor';
+        const contentArea = document.getElementById('content-area');
+        let doctorProfileData = null; // Variable global para guardar datos del perfil
+        let ece_current_patient_id = null; // ID del paciente seleccionado en el ECE
+        let ece_current_patient_name = ""; // Nombre del paciente seleccionado en el ECE
+        let ece_patient_visits = []; // Almacena las visitas del paciente
+        
+        // --- DECLARACIONES DE MODAL (Arreglo de error 'already declared') ---
+        const modal = document.getElementById('modal-backdrop');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+        
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.querySelector('.overlay').classList.toggle('open');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast-notification');
+            toast.textContent = message;
+            toast.className = 'show'; 
+            if (type === 'error') toast.classList.add('error');
+            else toast.classList.add('success');
+            setTimeout(() => {
+                toast.className = toast.className.replace('show', '');
+            }, 3000);
+        }
+
+        // Verificación de Token
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const userRole = localStorage.getItem('rol');
+            
+            if (!token || userRole !== 'Doctor') {
+                showToast('Acceso Denegado. Se requiere el rol de Doctor.', 'error');
+                setTimeout(logout, 1500);
+                throw new Error("Acceso no autorizado detenido."); 
+            }
+            
+            loadDoctorProfile(); 
+            loadHistorialClinico(); // Carga el módulo ECE por defecto
+        });
+
+        // Fetch Genérico (JSON)
+        async function apiFetch(endpoint, options = {}) {
+            const token = localStorage.getItem('token');
+            const defaultHeaders = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers: { ...defaultHeaders, ...options.headers }
+                });
+                
+                const contentType = response.headers.get("content-type");
+                if (response.status === 404) {
+                     throw new Error(`Error 404: No se encontró la ruta API (${endpoint}). Revise server.js.`);
+                }
+                
+                let result;
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    result = await response.json();
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`El servidor devolvió un error inesperado (no-JSON): ${errorText.substring(0, 100)}...`);
+                }
+
+                if (response.status === 401 || response.status === 403) {
+                     showToast(result.message || 'Sesión expirada.', 'error');
+                     setTimeout(logout, 1500);
+                     throw new Error('Unauthorized');
+                }
+                if (!response.ok) throw new Error(result.msg || result.message || `Error de API`);
+                return result;
+            } catch (error) {
+                if (error.message !== 'Unauthorized') {
+                    console.error(`Error en API Fetch (${endpoint}):`, error);
+                    showToast(`Error: ${error.message}`, 'error');
+                }
+                throw error; 
+            }
+        }
+        
+        // --- NUEVO: Fetch para Subir Archivos (FormData) ---
+        async function apiFetchFile(endpoint, formData) {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                        // NO se pone 'Content-Type'
+                    },
+                    body: formData
+                });
+                
+                const contentType = response.headers.get("content-type");
+                if (response.status === 404) {
+                     throw new Error(`Error 404: No se encontró la ruta API (${endpoint}). Revise server.js.`);
+                }
+                
+                let result;
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    result = await response.json();
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`El servidor devolvió un error inesperado (no-JSON): ${errorText.substring(0, 100)}...`);
+                }
+
+                if (response.status === 401 || response.status === 403) {
+                     showToast(result.message || 'Sesión expirada.', 'error');
+                     setTimeout(logout, 1500);
+                     throw new Error('Unauthorized');
+                }
+                if (!response.ok) throw new Error(result.msg || result.message || `Error de API`);
+                return result;
+            } catch (error) {
+                 if (error.message !== 'Unauthorized') {
+                    console.error(`Error en API FetchFile (${endpoint}):`, error);
+                    showToast(`Error: ${error.message}`, 'error');
+                }
+                throw error; 
+            }
+        }
+        
+        // Cargar Perfil del Doctor (Solo para el sidebar)
+        async function loadDoctorProfile() {
+            try {
+                // Hacemos la llamada a la API de doctor.html
+                const perfil = await (await fetch('/api/doctor/perfil', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                })).json();
+
+                if (!perfil.nombre) throw new Error('No se pudo cargar el perfil');
+                
+                doctorProfileData = perfil; 
+                document.getElementById('doctor-name').textContent = `${perfil.nombre} ${perfil.apellido}`;
+                document.getElementById('doctor-spec').textContent = perfil.especialidad;
+            } catch (error) {
+                doctorProfileData = null; 
+                document.getElementById('doctor-name').textContent = "Error al cargar";
+                document.getElementById('doctor-spec').textContent = "Verifique el servidor";
+            }
+        }
+
+        // --- SECCIÓN ECE: Carga Principal ---
+        async function loadHistorialClinico() {
+             let html = `
+                <h1><i class="fas fa-book-medical"></i> Expediente Clínico Electrónico</h1>
+                
+                <div class="form-container" style="max-width: 100%; margin-bottom: 20px;">
+                    <label for="ece-paciente-select">Seleccione un Paciente para ver su historial:</label>
+                    <select id="ece-paciente-select" onchange="loadEceData(this.value, this.options[this.selectedIndex].text)">
+                        <option value="">Cargando pacientes...</option>
+                    </select>
+                </div>
+                
+                <div id="ece-dashboard-container">
+                    <h2 id="ece-patient-name"></h2>
+                    <div class="ece-dashboard">
+                    
+                        <div class="dashboard-item" onclick="viewAntecedentes(ece_current_patient_id, ece_current_patient_name)">
+                            <i class="fas fa-file-medical"></i>
+                            <span>Hist. Antecedentes</span>
+                        </div>
+                        
+                        <div class="dashboard-item" onclick="loadEceVisitas()">
+                            <i class="fas fa-history"></i>
+                            <span>Visitas Médicas</span>
+                        </div>
+                        
+                         <div class="dashboard-item" onclick="loadEceAlergias()">
+                            <i class="fas fa-allergies"></i>
+                            <span>Alergias</span>
+                        </div>
+                        
+                        <div class="dashboard-item" onclick="loadEceVacunas()">
+                            <i class="fas fa-syringe"></i>
+                            <span>Vacunas</span>
+                        </div>
+                        
+                        <div class="dashboard-item" onclick="loadEceFamiliares()">
+                            <i class="fas fa-users"></i>
+                            <span>Hist. Familiar</span>
+                        </div>
+                         <div class="dashboard-item" onclick="loadEceCirugias()">
+                            <i class="fas fa-procedures"></i>
+                            <span>Cirugías</span>
+                        </div>
+                         
+                         <div class="dashboard-item" onclick="loadEceExamen('laboratorios', 'Laboratorio')">
+                            <i class="fas fa-vial"></i>
+                            <span>Laboratorio</span>
+                        </div>
+                         <div class="dashboard-item" onclick="loadEceExamen('radiologias', 'Radiología')">
+                            <i class="fas fa-x-ray"></i>
+                            <span>Radiología</span>
+                        </div>
+                         <div class="dashboard-item" onclick="loadEceExamen('laboratorios', 'Patología')">
+                            <i class="fas fa-microscope"></i>
+                            <span>Patología</span>
+                        </div>
+                        
+                        <div class="dashboard-item" style="background-color: #e8f5e9;" onclick="exportarDatosHL7(ece_current_patient_id)">
+                            <i class="fas fa-download" style="color: #4CAF50;"></i>
+                            <span>Exportar Datos (JSON)</span>
+                        </div>
+                        
+                    </div>
+                </div>
+            `;
+            contentArea.innerHTML = html;
+            
+            try {
+                const pacientes = await apiFetch('/pacientes');
+                const selectPac = document.getElementById('ece-paciente-select');
+                selectPac.innerHTML = '<option value="">Seleccione un paciente...</option>';
+                pacientes.forEach(p => {
+                    selectPac.innerHTML += `<option value="${p.id_paciente}">
+                        ${p.apellido}, ${p.nombre} (C.I: ${p.cedula})
+                    </option>`;
+                });
+            } catch (e) {
+                 document.getElementById('ece-paciente-select').innerHTML = '<option value="">Error al cargar pacientes</option>';
+            }
+        }
+        
+        // Carga los datos del ECE cuando se selecciona un paciente
+        async function loadEceData(patientId, patientName) {
+            const container = document.getElementById('ece-dashboard-container');
+            if (!patientId) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'block';
+            ece_current_patient_id = patientId;
+            ece_current_patient_name = patientName.split('(')[0].trim(); // Guarda solo el nombre
+            document.getElementById('ece-patient-name').innerText = `Expediente de: ${ece_current_patient_name}`;
+            
+            try {
+                ece_patient_visits = await apiFetch(`/paciente/${ece_current_patient_id}/visitas`);
+            } catch (e) {
+                ece_patient_visits = [];
+                showToast('No se pudieron cargar las visitas anteriores para vincular exámenes.', 'error');
+            }
+        }
+        
+        
+        // --- LÓGICA DEL MODAL (Pop-up) ---
+        function openModal(title, bodyHtml) {
+            modalTitle.innerText = title;
+            modalBody.innerHTML = bodyHtml;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        // --- LÓGICA DEL MODAL (Opción 1: Antecedentes) ---
+        async function viewAntecedentes(id_paciente, nombre) {
+            if(!id_paciente) return showToast('Por favor, seleccione un paciente primero.', 'error');
+            openModal(`Antecedentes de: ${nombre}`, '<p>Cargando antecedentes...</p>');
+            
+            try {
+                const data = await apiFetch(`/paciente/${id_paciente}/antecedentes`);
+                const ant = data.antecedentes; 
+                
+                if (!ant) {
+                    modalBody.innerHTML = `<p><strong>No se encontraron datos.</strong></p>`;
+                    return;
+                }
+                
+                modalBody.innerHTML = `
+                    <h3 class="emergencia">
+                        <i class="fas fa-ambulance"></i> Contacto de Emergencia
+                    </h3>
+                    <p><strong>Nombre:</strong> ${ant.contacto_emergencia_nombre || 'No registra'}</p>
+                    <p><strong>Teléfono:</strong> ${ant.contacto_emergencia_telefono || 'No registra'}</p>
+                    
+                    <h3>
+                        <i class="fas fa-file-medical"></i> Antecedentes Médicos (Reportados por Paciente)
+                    </h3>
+                    ${ant.message ? `<p><strong>${ant.message}</strong></p>` : ''}
+                    <p><strong>Alergias (reportadas):</strong> ${ant.alergias || 'No registra'}</p>
+                    <p><strong>Condición Crónica:</strong> ${ant.condicion_cronica || 'No registra'}</p>
+                    <p><strong>Medicamentos Actuales:</strong> ${ant.medicamentos_actuales || 'No registra'}</p>
+                    <p><strong>Cirugías Previas:</strong> ${ant.cirugia_previa || 'No registra'}</p>
+                    <p><strong>Antecedentes Familiares:</strong> ${ant.antecedentes_familiares || 'No registra'}</p>
+                    <p><strong>Tabaco:</strong> ${ant.habito_tabaco ? 'Sí' : 'No'}</p>
+                    <p><strong>Alcohol:</strong> ${ant.habito_alcohol ? 'Sí' : 'No'}</p>
+                `;
+
+            } catch (error) {
+                modalBody.innerHTML = `<p style="color: red;">Error al cargar el historial: ${error.message}</p>`;
+            }
+        }
+        
+        // --- LÓGICA DEL MODAL (Opción 2: Detalles de Visita/Prescripción) ---
+        async function viewVisitaDetails(visita, tienePrescripcion) {
+            const fecha = new Date(visita.fecha_visita).toLocaleString('es-VE');
+            let bodyHtml = `
+                <h3><i class="fas fa-stethoscope"></i> Datos de la Visita</h3>
+                <p><strong>Fecha:</strong> ${fecha}</p>
+                <p><strong>Diagnóstico:</strong> ${visita.diagnostico || 'N/A'}</p>
+                <p><strong>Motivo:</strong> ${visita.motivo_consulta || 'N/A'}</p>
+                <p><strong>Notas de Evolución:</strong> ${visita.notas_evolucion || 'N/A'}</p>
+                
+                <h3><i class="fas fa-heartbeat"></i> Signos Vitales</h3>
+                <p><strong>P. Arterial:</strong> ${visita.presion_arterial || 'N/R'}</p>
+                <p><strong>Glicemia:</strong> ${visita.glicemia || 'N/R'} mg/dL</p>
+                <p><strong>Sat. O₂:</strong> ${visita.saturacion_oxigeno || 'N/R'} %</p>
+                <p><strong>Temp:</strong> ${visita.temperatura_c || 'N/R'} °C</p>
+                <p><strong>Peso/Talla:</strong> ${visita.peso_kg || 'N/R'} Kg / ${visita.talla_cm || 'N/R'} cm</p>
+                
+                <h3 class="emergencia"><i class="fas fa-file-prescription"></i> Récipē Asociado</h3>
+            `;
+
+            if (!tienePrescripcion) {
+                bodyHtml += "<p>Esta visita no generó una prescripción.</p>";
+                openModal(`Detalle de Visita (ID: ${visita.id_visita})`, bodyHtml);
+                return;
+            }
+
+            try {
+                const detalles = await apiFetch(`/prescripcion/${visita.id_visita}`);
+                if (detalles.message || detalles.length === 0) {
+                     bodyHtml += `<p>No se encontraron detalles de la prescripción.</p>`;
+                } else {
+                    bodyHtml += '<table style="width:100%;">';
+                    detalles.forEach(med => {
+                        bodyHtml += `
+                            <tr>
+                                <td style="padding: 5px;"><strong>${med.nombre_medicamento}</strong></td>
+                                <td style="padding: 5px;">${med.dosis}</td>
+                                <td style="padding: 5px;">${med.frecuencia}</td>
+                                <td style="padding: 5px;">${med.duracion}</td>
+                            </tr>
+                        `;
+                    });
+                    bodyHtml += '</table>';
+                    if(detalles[0] && detalles[0].observaciones) {
+                         bodyHtml += `<p style="margin-top:10px;"><strong>Observaciones:</strong> ${detalles[0].observaciones}</p>`;
+                    }
+                }
+            } catch (error) {
+                 bodyHtml += `<p style="color: red;">Error al cargar el récipe: ${error.message}</p>`;
+            }
+            
+            openModal(`Detalle de Visita (ID: ${visita.id_visita})`, bodyHtml);
+        }
+        
+        // --- LÓGICA DEL MODAL (Opción 3: Visitas Anteriores) ---
+        async function loadEceVisitas() {
+            if(!ece_current_patient_id) return showToast('Por favor, seleccione un paciente primero.', 'error');
+            openModal(`Visitas Anteriores de: ${ece_current_patient_name}`, '<p>Cargando visitas...</p>');
+            
+            try {
+                // ece_patient_visits ya fue cargada por loadEceData()
+                const visitas = ece_patient_visits;
+                if (visitas.length === 0) {
+                    modalBody.innerHTML = '<table><tbody><tr><td class="empty-table">Este paciente no tiene visitas registradas.</td></tr></tbody></table>';
+                    return;
+                }
+                
+                let tableHtml = `
+                    <p>Mostrando las últimas visitas registradas.</p>
+                    <table>
+                        <thead><tr>
+                            <th>Fecha</th>
+                            <th>Diagnóstico</th>
+                            <th>Acciones</th>
+                        </tr></thead>
+                        <tbody>
+                `;
+                visitas.forEach(v => {
+                    const fecha = new Date(v.fecha_visita).toLocaleString('es-VE');
+                    const visitaJson = JSON.stringify(v); 
+                    
+                    tableHtml += `
+                        <tr>
+                            <td>${fecha}</td>
+                            <td>${v.diagnostico}</td>
+                            <td>
+                                <button class="btn-principal" onclick='viewVisitaDetails(${visitaJson}, ${v.tiene_prescripcion})'>
+                                    <i class="fas fa-eye"></i> Ver
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tableHtml += '</tbody></table>';
+                modalBody.innerHTML = tableHtml;
+                
+            } catch(e) { modalBody.innerHTML = `<p style="color:red;">${e.message}</p>`; }
+        }
+
+        // --- LÓGICA DEL MODAL (Opción 4: Alergias) ---
+        async function loadEceAlergias() {
+            if(!ece_current_patient_id) return showToast('Por favor, seleccione un paciente primero.', 'error');
+            
+            let modalHtml = `
+                <div class="form-container" style="box-shadow: none; padding: 0; max-width: 100%;">
+                    <form id="form-add-alergia">
+                        <h3>Registrar Nueva Alergia</h3>
+                        <label for="alergia-alergeno">Alergeno:</label>
+                        <input type="text" id="alergia-alergeno" placeholder="Ej: Penicilina" required>
+                        <label for="alergia-tipo">Tipo:</label>
+                        <select id="alergia-tipo">
+                            <option value="Medicamentosa">Medicamentosa</option>
+                            <option value="Alimentaria">Alimentaria</option>
+                            <option value="Ambiental">Ambiental</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                        <label for="alergia-reaccion">Reacción presentada:</label>
+                        <textarea id="alergia-reaccion" placeholder="Ej: Urticaria, Anafilaxia"></textarea>
+                        <button type="submit" class="btn-principal">Guardar Alergia</button>
+                    </form>
+                    <hr style="margin: 20px 0;">
+                    <h3>Alergias Registradas</h3>
+                    <div id="ece-alergias-list">Cargando...</div>
+                </div>
+            `;
+            openModal(`Alergias de: ${ece_current_patient_name}`, modalHtml);
+            
+            document.getElementById('form-add-alergia').onsubmit = handleSaveAlergia;
+            
+            const listDiv = document.getElementById('ece-alergias-list');
+            try {
+                const alergias = await apiFetch(`/paciente/${ece_current_patient_id}/alergias`);
+                if (alergias.length === 0) {
+                    listDiv.innerHTML = '<table><tbody><tr><td class="empty-table">No hay alergias registradas.</td></tr></tbody></table>';
+                    return;
+                }
+                let tableHtml = `
+                    <table>
+                        <thead><tr><th>Alergeno</th><th>Tipo</th><th>Reacción</th><th>Acción</th></tr></thead>
+                        <tbody>
+                `;
+                alergias.forEach(a => {
+                    tableHtml += `
+                        <tr>
+                            <td>${a.alergeno}</td>
+                            <td>${a.tipo_alergia}</td>
+                            <td>${a.reaccion_presentada || 'N/A'}</td>
+                            <td>
+                                <button class="btn-rojo" onclick="handleDeleteAlergia(${a.id_alergia})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tableHtml += '</tbody></table>';
+                listDiv.innerHTML = tableHtml;
+            } catch(e) { listDiv.innerHTML = `<p style="color:red;">${e.message}</p>`; }
+        }
+        
+        async function handleSaveAlergia(e) {
+            e.preventDefault();
+            const data = {
+                fk_paciente: ece_current_patient_id,
+                alergeno: document.getElementById('alergia-alergeno').value,
+                tipo_alergia: document.getElementById('alergia-tipo').value,
+                reaccion_presentada: document.getElementById('alergia-reaccion').value,
+            };
+            try {
+                await apiFetch('/paciente/alergias', { method: 'POST', body: JSON.stringify(data) });
+                showToast('Alergia registrada.', 'success');
+                loadEceAlergias(); // Recargar la lista
+            } catch(e) { showToast(`Error: ${e.message}`, 'error'); }
+        }
+        
+        async function handleDeleteAlergia(id_alergia) {
+            if (!confirm('¿Está seguro de eliminar esta alergia?')) return;
+            try {
+                await apiFetch(`/alergias/${id_alergia}`, { method: 'DELETE' });
+                showToast('Alergia eliminada.', 'success');
+                loadEceAlergias(); // Recargar
+            } catch(e) { showToast(`Error: ${e.message}`, 'error'); }
+        }
+        
+        // --- LÓGICA DEL MODAL (Opción 5: Vacunas) ---
+         async function loadEceVacunas() {
+            if(!ece_current_patient_id) return showToast('Por favor, seleccione un paciente primero.', 'error');
+            
+            let modalHtml = `
+                 <div class="form-container" style="box-shadow: none; padding: 0; max-width: 100%;">
+                    <form id="form-add-vacuna">
+                        <h3>Registrar Vacuna</h3>
+                        <label for="vacuna-nombre">Nombre:</label>
+                        <input type="text" id="vacuna-nombre" placeholder="Ej: COVID-19" required>
+                        <label for="vacuna-dosis">Dosis:</label>
+                        <input type="text" id="vacuna-dosis" placeholder="Ej: 2da Dosis">
+                        
+                        <label for="vacuna-fecha">Fecha de Aplicación:</label>
+                        <input type="date" id="vacuna-fecha" required>
+                        <button type="submit" class="btn-principal">Guardar Vacuna</button>
+                    </form>
+                    <hr style="margin: 20px 0;">
+                    <h3>Vacunas Registradas</h3>
+                    <div id="ece-vacunas-list">Cargando...</div>
+                </div>
+            `;
+            openModal(`Vacunas de: ${ece_current_patient_name}`, modalHtml);
+
+            document.getElementById('form-add-vacuna').onsubmit = handleSaveVacuna;
+            
+            const listDiv = document.getElementById('ece-vacunas-list');
+            try {
+                const vacunas = await apiFetch(`/paciente/${ece_current_patient_id}/vacunas`);
+                if (vacunas.length === 0) {
+                    listDiv.innerHTML = '<table><tbody><tr><td class="empty-table">No hay vacunas registradas.</td></tr></tbody></table>';
+                    return;
+                }
+                let tableHtml = `
+                    <table>
+                        <thead><tr><th>Vacuna</th><th>Dosis</th><th>Fecha</th><th>Acción</th></tr></thead>
+                        <tbody>
+                `;
+                // CORRECCIÓN: Eliminado 'lote' de la tabla
+                vacunas.forEach(v => {
+                    tableHtml += `
+                        <tr>
+                            <td>${v.nombre_vacuna}</td>
+                            <td>${v.dosis}</td>
+                            <td>${new Date(v.fecha_aplicacion).toLocaleDateString('es-VE')}</td>
+                            <td>
+                                <button class="btn-rojo" onclick="handleDeleteVacuna(${v.id_vacuna})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tableHtml += '</tbody></table>';
+                listDiv.innerHTML = tableHtml;
+            } catch(e) { listDiv.innerHTML = `<p style="color:red;">${e.message}</p>`; }
+        }
+        
+        async function handleSaveVacuna(e) {
+            e.preventDefault();
+            const data = {
+                fk_paciente: ece_current_patient_id,
+                nombre_vacuna: document.getElementById('vacuna-nombre').value,
+                dosis: document.getElementById('vacuna-dosis').value,
+                // 'lote' eliminado
+                fecha_aplicacion: document.getElementById('vacuna-fecha').value,
+            };
+            try {
+                await apiFetch('/paciente/vacunas', { method: 'POST', body: JSON.stringify(data) });
+                showToast('Vacuna registrada.', 'success');
+                loadEceVacunas(); // Recargar
+            } catch(e) { showToast(`Error: ${e.message}`, 'error'); }
+        }
+
+        async function handleDeleteVacuna(id_vacuna) {
+            if (!confirm('¿Está seguro de eliminar este registro de vacuna?')) return;
+            try {
+                await apiFetch(`/vacunas/${id_vacuna}`, { method: 'DELETE' });
+                showToast('Registro eliminado.', 'success');
+                loadEceVacunas(); // Recargar
+            } catch(e) { showToast(`Error: ${e.message}`, 'error'); }
+        }
+        
+        // --- LÓGICA DEL MODAL (Opción 6: Hist. Familiar) ---
+        async function loadEceFamiliares() {
+            if(!ece_current_patient_id) return showToast('Por favor, seleccione un paciente primero.', 'error');
+            
+            let modalHtml = `
+                <div class="form-container" style="box-shadow: none; padding: 0; max-width: 100%;">
+                    <form id="form-add-familiar">
+                        <h3>Registrar Antecedente Familiar</h3>
+                        <div class="form-grid">
+                            <div>
+                                <label for="fam-parentesco">Parentesco:</label>
+                                <input type="text" id="fam-parentesco" placeholder="Ej: Madre, Abuelo Paterno" required>
+                            </div>
+                            <div>
+                                <label for="fam-condicion">Condición Médica:</label>
+                                <input type="text" id="fam-condicion" placeholder="Ej: Diabetes Mellitus Tipo 2" required>
+                            </div>
+                        </div>
+                        <label for="fam-notas">Notas (Opcional):</label>
+                        <textarea id="fam-notas" placeholder="Detalles adicionales..."></textarea>
+                        <button type="submit" class="btn-principal">Guardar Antecedente</button>
+                    </form>
+                    <hr style="margin: 20px 0;">
+                    <h3>Antecedentes Familiares Registrados</h3>
+                    <div id="ece-familiares-list">Cargando...</div>
+                </div>
+            `;
+            openModal(`Historial Familiar de: ${ece_current_patient_name}`, modalHtml);
+
+            document.getElementById('form-add-familiar').onsubmit = handleSaveFamiliar;
+            
+            const listDiv = document.getElementById('ece-familiares-list');
+            try {
+                const data = await apiFetch(`/paciente/${ece_current_patient_id}/familiares`);
+                if (data.length === 0) {
+                    listDiv.innerHTML = '<table><tbody><tr><td class="empty-table">No hay antecedentes familiares registrados.</td></tr></tbody></table>';
+                    return;
+                }
+                let tableHtml = `
+                    <table>
+                        <thead><tr><th>Parentesco</th><th>Condición Médica</th><th>Notas</th><th>Acción</th></tr></thead>
+                        <tbody>
+                `;
+                data.forEach(f => {
+                    tableHtml += `
+                        <tr>
+                            <td>${f.parentesco}</td>
+                            <td>${f.condicion_medica}</td>
+                            <td>${f.notas || 'N/A'}</td>
+                            <td>
+                                <button class="btn-rojo" onclick="handleDeleteFamiliar(${f.id_antecedente_fam})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tableHtml += '</tbody></table>';
+                listDiv.innerHTML = tableHtml;
+            } catch(e) { listDiv.innerHTML = `<p style="color:red;">${e.message}</p>`; }
+        }
+
+        async function handleSaveFamiliar(e) {
+            e.preventDefault();
+            const data = {
+                fk_paciente: ece_current_patient_id,
+                parentesco: document.getElementById('fam-parentesco').value,
+                condicion_medica: document.getElementById('fam-condicion').value,
+                notas: document.getElementById('fam-notas').value,
+            };
+            try {
+                await apiFetch('/paciente/familiares', { method: 'POST', body: JSON.stringify(data) });
+                showToast('Antecedente familiar registrado.', 'success');
+                loadEceFamiliares(); // Recargar
+            } catch(e) { showToast(`Error: ${e.message}`, 'error'); }
+        }
+
+        async function handleDeleteFamiliar(id) {
+            if (!confirm('¿Está seguro de eliminar este antecedente?')) return;
+            try {
+                await apiFetch(`/familiares/${id}`, { method: 'DELETE' });
+                showToast('Antecedente eliminado.', 'success');
+                loadEceFamiliares(); // Recargar
+            } catch(e) { showToast(`Error: ${e.message}`, 'error'); }
+        }
+
+        // --- LÓGICA DEL MODAL (Opción 7: Cirugías) ---
+        async function loadEceCirugias() {
+            if(!ece_current_patient_id) return showToast('Por favor, seleccione un paciente primero.', 'error');
+            
+            let modalHtml = `
+                <div class="form-container" style="box-shadow: none; padding: 0; max-width: 100%;">
+                    <form id="form-add-cirugia">
+                        <h3>Registrar Cirugía</h3>
+                        <label for="cir-procedimiento">Nombre del Procedimiento:</label>
+                        <input type="text" id="cir-procedimiento" placeholder="Ej: Apendicectomía" required>
+                        <label for="cir-fecha">Fecha de Cirugía:</label>
+                        <input type="date" id="cir-fecha" required>
+                        <label for="cir-hospital">Hospital (Opcional):</label>
+                        <input type="text" id="cir-hospital" placeholder="Ej: Hospital Coromoto">
+                        <label for="cir-informe">Informe Operatorio (Opcional):</label>
+                        <textarea id="cir-informe" placeholder="Detalles del procedimiento..."></textarea>
+                        <button type="submit" class="btn-principal">Guardar Cirugía</button>
+                    </form>
+                    <hr style="margin: 20px 0;">
+                    <h3>Cirugías Registradas</h3>
+                    <div id="ece-cirugias-list">Cargando...</div>
+                </div>
+            `;
+            openModal(`Historial Quirúrgico de: ${ece_current_patient_name}`, modalHtml);
+
+            document.getElementById('form-add-cirugia').onsubmit = handleSaveCirugia;
+            
+            const listDiv = document.getElementById('ece-cirugias-list');
+            try {
+                const data = await apiFetch(`/paciente/${ece_current_patient_id}/cirugias`);
+                if (data.length === 0) {
+                    listDiv.innerHTML = '<table><tbody><tr><td class="empty-table">No hay cirugías registradas.</td></tr></tbody></table>';
+                    return;
+                }
+                let tableHtml = `
+                    <table>
+                        <thead><tr><th>Fecha</th><th>Procedimiento</th><th>Hospital</th><th>Acción</th></tr></thead>
+                        <tbody>
+                `;
+                data.forEach(c => {
+                    tableHtml += `
+                        <tr>
+                            <td>${new Date(c.fecha_cirugia).toLocaleDateString('es-VE')}</td>
+                            <td>${c.nombre_procedimiento}</td>
+                            <td>${c.hospital_donde_fue || 'N/A'}</td>
+                            <td>
+                                <button class="btn-rojo" onclick="handleDeleteCirugia(${c.id_cirugia})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tableHtml += '</tbody></table>';
+                listDiv.innerHTML = tableHtml;
+            } catch(e) { listDiv.innerHTML = `<p style="color:red;">${e.message}</p>`; }
+        }
+        
+        async function handleSaveCirugia(e) {
+            e.preventDefault();
+            const data = {
+                fk_paciente: ece_current_patient_id,
+                nombre_procedimiento: document.getElementById('cir-procedimiento').value,
+                fecha_cirugia: document.getElementById('cir-fecha').value,
+                hospital_donde_fue: document.getElementById('cir-hospital').value,
+                informe_operatorio: document.getElementById('cir-informe').value,
+            };
+            try {
+                // Esta llamada funciona porque tu server.js ahora usa 'fk_doctor_cirujano'
+                await apiFetch('/paciente/cirugias', { method: 'POST', body: JSON.stringify(data) });
+                showToast('Cirugía registrada.', 'success');
+                loadEceCirugias(); // Recargar
+            } catch(e) { showToast(`Error: ${e.message}`, 'error'); }
+        }
+
+        async function handleDeleteCirugia(id) {
+            if (!confirm('¿Está seguro de eliminar este registro?')) return;
+            try {
+                await apiFetch(`/cirugias/${id}`, { method: 'DELETE' });
+                showToast('Registro eliminado.', 'success');
+                loadEceCirugias(); // Recargar
+            } catch(e) { showToast(`Error: ${e.message}`, 'error'); }
+        }
+        
+        // --- LÓGICA DEL MODAL (Opción 8 y 9: Laboratorio/Radiología/Patología) ---
+        // (Función unificada y corregida)
+        async function loadEceExamen(endpoint, tipoHeader = '') {
+            if (!ece_current_patient_id) return showToast('Por favor, seleccione un paciente primero.', 'error');
+            
+            let titulo = tipoHeader || (endpoint === 'laboratorios' ? 'Laboratorio' : 'Radiología');
+
+            // Generar el <select> de visitas
+            let visitasOptions = '<option value="">Vincular a una visita...</option>';
+            if (ece_patient_visits.length === 0) {
+                visitasOptions = '<option value="">No hay visitas para vincular</option>';
+            } else {
+                ece_patient_visits.forEach(v => {
+                    visitasOptions += `<option value="${v.id_visita}">
+                        ${new Date(v.fecha_visita).toLocaleDateString('es-VE')} - ${v.diagnostico}
+                    </option>`;
+                });
+            }
+
+            // Campos específicos para Radio/Lab
+            let camposEspecificos = '';
+            if (endpoint === 'laboratorios') {
+                camposEspecificos = `
+                    <label for="examen-nombre">Nombre del Examen:</label>
+                    <input type="text" id="examen-nombre" placeholder="Ej: Hematología Completa" required>
+                    <label for="examen-resultado">Resultado (o informe resumido):</label>
+                    <textarea id="examen-resultado" placeholder="Valores principales o "Ver adjunto"..."></textarea>
+                `;
+            } else { // Radiologias
+                camposEspecificos = `
+                    <label for="examen-nombre">Nombre del Estudio:</label>
+                    <input type="text" id="examen-nombre" placeholder="Ej: Rayos X de Tórax AP/L" required>
+                    <label for="examen-informe">Informe Radiológico:</label>
+                    <textarea id="examen-informe" placeholder="Conclusiones del estudio..."></textarea>
+                `;
+            }
+
+            let modalHtml = `
+                <div class="form-container" style="box-shadow: none; padding: 0; max-width: 100%;">
+                    <form id="form-add-examen">
+                        <h3>Registrar Nuevo Examen de ${titulo}</h3>
+                        <label for="examen-visita">Visita Asociada (Obligatorio):</label>
+                        <select id="examen-visita" required>${visitasOptions}</select>
+                        
+                        ${camposEspecificos}
+                        
+                        <label for="examen-archivo">Subir Archivo (PDF/JPG):</label>
+                        <input type="file" id="examen-archivo" accept=".pdf,.jpg,.jpeg,.png">
+                        
+                        <button type="submit" class="btn-principal">Guardar Examen</button>
+                    </form>
+                    <hr style="margin: 20px 0;">
+                    <h3>Exámenes de ${titulo} Registrados</h3>
+                    <div id="ece-examen-list">Cargando...</div>
+                </div>
+            `;
+            openModal(`Exámenes de ${titulo} de: ${ece_current_patient_name}`, modalHtml);
+
+            // Asignar el listener al formulario
+            document.getElementById('form-add-examen').onsubmit = (e) => handleSaveExamen(e, endpoint, tipoHeader);
+            
+            // Cargar la lista
+            const listDiv = document.getElementById('ece-examen-list');
+            try {
+                // Llama al endpoint en PLURAL
+                const data = await apiFetch(`/paciente/${ece_current_patient_id}/${endpoint}`);
+                if (data.length === 0) {
+                    listDiv.innerHTML = '<table><tbody><tr><td class="empty-table">No hay exámenes registrados.</td></tr></tbody></table>';
+                    return;
+                }
+                
+                let tableHtml = `<table><thead><tr><th>Fecha</th><th>Examen/Estudio</th><th>Visita (Diagnóstico)</th><th>Resultado/Informe</th><th>Archivo</th></tr></thead><tbody>`;
+                
+                data.forEach(item => {
+                    let nombre = item.nombre_examen || item.nombre_estudio;
+                    let resultado = (item.resultado || item.informe_radiologico || '').substring(0, 30) + '...';
+                    let archivoUrl = (endpoint === 'laboratorios') ? `/uploads/laboratorios/${item.archivo_adjunto}` : `/uploads/radiologia/${item.archivo_adjunto}`;
+                    
+                    tableHtml += `
+                        <tr>
+                            <td>${new Date(item.fecha_examen || item.fecha_estudio).toLocaleDateString('es-VE')}</td>
+                            <td>${nombre}</td>
+                            <td>${item.diagnostico}</td>
+                            <td>${resultado}</td>
+                            <td>
+                                ${item.archivo_adjunto ? 
+                                    `<a href="${archivoUrl}" target="_blank" class="btn-principal">Ver</a>` : 
+                                    'N/A'}
+                            </td>
+                        </tr>
+                    `;
+                });
+                tableHtml += '</tbody></table>';
+                listDiv.innerHTML = tableHtml;
+            } catch(e) { listDiv.innerHTML = `<p style="color:red;">${e.message}</p>`; }
+        }
+
+        // --- Manejador ÚNICO para subida de exámenes (Lab/Radio) ---
+        async function handleSaveExamen(e, endpoint, tipoHeader = '') {
+            e.preventDefault();
+            const form = document.getElementById('form-add-examen');
+            const fileInput = form.querySelector('#examen-archivo');
+            const file = fileInput.files[0];
+
+            if (!form.checkValidity()) {
+                return showToast('Por favor, complete todos los campos requeridos.', 'error');
+            }
+
+            const formData = new FormData();
+            formData.append('fk_paciente', ece_current_patient_id);
+            formData.append('fk_visita', form.querySelector('#examen-visita').value);
+
+            if (endpoint === 'laboratorios') {
+                formData.append('nombre_examen', form.querySelector('#examen-nombre').value);
+                formData.append('resultado', form.querySelector('#examen-resultado').value);
+            } else { // Radiologias
+                formData.append('nombre_estudio', form.querySelector('#examen-nombre').value);
+                formData.append('informe_radiologico', form.querySelector('#examen-informe').value);
+            }
+            
+            if (file) {
+                formData.append('archivo_adjunto', file);
+            }
+
+            try {
+                // Llama al endpoint en PLURAL (ej: /paciente/laboratorios)
+                await apiFetchFile(`/paciente/${endpoint}`, formData);
+                showToast(`Examen guardado.`, 'success');
+                
+                // Recarga el modal correspondiente
+                loadEceExamen(endpoint, tipoHeader);
+                
+            } catch(e) {
+                showToast(`Error al guardar: ${e.message}`, 'error');
+            }
+        }
+        
+        // --- LÓGICA DEL MODAL (Opción 10: Exportar Datos "HL7") ---
+        async function exportarDatosHL7(id_paciente) {
+            if(!id_paciente) return showToast('Por favor, seleccione un paciente primero.', 'error');
+            
+            showToast('Generando exportación de datos... Espere por favor.', 'success');
+            
+            try {
+                // 1. Llamar a la API que compila todos los datos
+                const datosCompletos = await apiFetch(`/paciente/${id_paciente}/exportar-datos`);
+                
+                // 2. Convertir el JSON a un string
+                const jsonString = JSON.stringify(datosCompletos, null, 2); // 'null, 2' lo formatea bonito
+                
+                // 3. Crear un Blob (un archivo en memoria)
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                
+                // 4. Crear un enlace <a> falso para iniciar la descarga
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ECE-${datosCompletos.paciente.cedula || 'paciente'}.json`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // 5. Limpiar
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showToast('Datos exportados a JSON exitosamente.', 'success');
+
+            } catch(e) {
+                showToast(`Error al exportar datos: ${e.message}`, 'error');
+            }
+        }
+
+    </script>
+</body>
+</html>

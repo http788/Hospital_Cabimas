@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administrador - Hospital Dr. Adolfo D' Empaire</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <script>
+        // (Tu script de seguridad y token va aquí... está idéntico)
+        function redirectToLogin() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('rol');
+            window.location.href = 'login.html';
+        }
+        const token = localStorage.getItem('token');
+        const userRole = localStorage.getItem('rol') ? localStorage.getItem('rol').trim() : null; 
+        const requiredRole = 'Administrador'; 
+        if (!token || userRole !== requiredRole) {
+            alert('Acceso Denegado. Se requiere el rol de Administrador.');
+            redirectToLogin();
+            throw new Error("Acceso no autorizado detenido."); 
+        }
+        function logout() {
+            redirectToLogin();
+        }
+    </script>
+    
+    <style>
+        :root {
+            --color-principal: #0D47A1; /* Azul oscuro */
+            --color-acento: #D32F2F; /* Rojo */
+            --color-fondo: #F5F5F5;
+            --color-texto-claro: #FFFFFF;
+            --color-texto-oscuro: #212121;
+        }
+        /* (Todo tu CSS va aquí... está idéntico) */
+        body { font-family: 'Arial', sans-serif; background-color: var(--color-fondo); margin: 0; }
+        #admin-wrapper { display: flex; min-height: 100vh; }
+        
+        /* ---------------------- SIDEBAR ---------------------- */
+        #sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, var(--color-principal) 0%, #003366 100%);
+            color: var(--color-texto-claro);
+            padding: 20px 0;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3); /* Efecto 3D */
+            flex-shrink: 0;
+            transition: margin-left 0.3s ease-out;
+            z-index: 100;
+        }
+        #sidebar h2 { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            color: var(--color-texto-claro);
+            border-bottom: 2px solid var(--color-acento);
+            padding-bottom: 15px;
+            margin-left: 15px;
+            margin-right: 15px;
+        }
+        #sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: var(--color-texto-claro);
+            text-decoration: none;
+            transition: background 0.3s, box-shadow 0.3s;
+            font-weight: bold;
+            border-left: 5px solid transparent;
+        }
+        #sidebar a i { margin-right: 15px; width: 20px; }
+        #sidebar a:hover {
+            background-color: #1565C0; 
+        }
+        #sidebar a.active {
+            background-color: #1976D2;
+            border-left: 5px solid var(--color-acento); /* Rojo de acento */
+            box-shadow: inset 3px 0 8px rgba(0,0,0,0.2); 
+        }
+        .logout-menu-item { background-color: #8D021F !important; }
+        .logout-menu-item:hover { background-color: var(--color-acento) !important; }
+        
+        /* ---------------------- CONTENIDO PRINCIPAL ---------------------- */
+        #main-content {
+            flex-grow: 1;
+            padding: 40px;
+            padding-top: 80px; /* Espacio para header móvil */
+        }
+        #main-content h1 { 
+            color: var(--color-principal); 
+            margin-bottom: 25px; 
+            border-bottom: 2px solid var(--color-acento);
+            padding-bottom: 10px;
+        }
+        #main-content h2 {
+            color: var(--color-principal);
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            margin-top: 20px;
+        }
+        
+        /* ---------------------- BOTONES Y FORMULARIOS (3D) ---------------------- */
+        .btn-rojo, .btn-principal {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px; 
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95em;
+            text-decoration: none;
+            display: inline-block;
+            border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.15s ease-out;
+            transform: translateY(0);
+            margin-right: 10px;
+        }
+        .btn-rojo {
+            background-color: var(--color-acento);
+            color: var(--color-texto-claro);
+        }
+        .btn-principal {
+            background-color: var(--color-principal);
+            color: var(--color-texto-claro);
+        }
+        
+        .btn-rojo:hover, .btn-principal:hover {
+            transform: translateY(-2px); /* Levantar */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        .btn-rojo:active, .btn-principal:active {
+            transform: translateY(1px); /* Presionar */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            border-bottom-width: 1px;
+        }
+        .btn-rojo-small, .btn-principal-small {
+            padding: 5px 8px;
+            font-size: 0.9em;
+            border-radius: 5px;
+            border-bottom-width: 2px;
+        }
+
+        input[type="text"], input[type="password"], input[type="number"], input[type="date"], select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1em;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 10px;
+        }
+        .form-container {
+             background: white; padding: 30px; border-radius: 10px; 
+             box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+             border: 1px solid #e0e0e0;
+             margin-bottom: 20px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        /* ---------------------- TABLAS Y CARDS ---------------------- */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+            background-color: white; 
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+            table-layout: fixed; /* Ayuda a que las columnas se comporten */
+        }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; word-break: break-word; }
+        th { background-color: var(--color-principal); color: var(--color-texto-claro); font-weight: bold; }
+        tr:hover { background-color: #f1f1f1; }
+        .empty-table { text-align: center; color: #777; font-style: italic; padding: 20px; }
+        
+        .metricas-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 30px; 
+        }
+        .metric-card { 
+            padding: 20px; 
+            background-color: var(--color-texto-claro); 
+            border-radius: 10px; 
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        .metric-card h3 { color: var(--color-principal); margin-bottom: 5px; font-size: 1.1em; }
+        .metric-card p { font-size: 2.5em; font-weight: bold; color: var(--color-acento); margin: 0; }
+        
+        /* Tarjetas de Historial de Paciente */
+        .historial-card {
+            text-align: left;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .historial-card h4 { /* Modificado de h3 a h4 */
+             font-size: 1.1em;
+             margin-top: 0;
+             margin-bottom: 10px;
+             color: var(--color-principal);
+        }
+        .historial-card p {
+            font-size: 0.95em; /* Ligeramente más pequeño */
+            color: #333;
+            font-weight: normal;
+            line-height: 1.6;
+            margin: 5px 0; /* Menos espacio */
+        }
+         .historial-card p strong {
+             color: var(--color-texto-oscuro);
+             display: inline-block;
+             min-width: 100px;
+         }
+
+        /* ---------------------- CENSO DE CAMAS ---------------------- */
+        .censo-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        .cama-item { 
+            padding: 10px; 
+            width: 100px; 
+            text-align: center; 
+            border-radius: 5px; 
+            color: white; 
+            font-size: 0.8em;
+            cursor: pointer; 
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-bottom: 3px solid rgba(0,0,0,0.3);
+        }
+        .cama-item:hover { 
+            transform: scale(1.05) translateY(-3px); 
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        .cama-Libre { background-color: #4CAF50; }
+        .cama-Ocupada { background-color: var(--color-acento); }
+        .cama-Limpieza { background-color: #FFC107; color: var(--color-texto-oscuro); }
+
+        /* ---------------------- RESPONSIVIDAD (VISTA TELÉFONO) ---------------------- */
+        .header-mobile {
+            display: none; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            z-index: 90;
+            align-items: center;
+        }
+        .menu-toggle {
+            font-size: 1.8em;
+            cursor: pointer;
+            color: var(--color-principal); 
+            margin-right: 15px;
+        }
+        .header-mobile h1 { font-size: 1.3em; color: var(--color-principal); margin: 0; }
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); z-index: 99; display: none; 
+        }
+
+        @media (max-width: 900px) {
+             #sidebar {
+                position: fixed;
+                height: 100%;
+                margin-left: -250px; 
+            }
+            #sidebar.open {
+                margin-left: 0; 
+            }
+            .header-mobile {
+                display: flex;
+            }
+            #main-content {
+                padding: 20px;
+                padding-top: 90px;
+            }
+            .overlay.open {
+                display: block;
+            }
+            .metricas-grid {
+                 grid-template-columns: 1fr 1fr; /* 2 columnas en móvil */
+            }
+            
+            /* Tablas Colapsadas para Móvil */
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { position: absolute; top: -9999px; left: -9999px; }
+            tr { border: 1px solid #ccc; margin-bottom: 10px; border-radius: 8px;}
+            td {
+                border: none; border-bottom: 1px solid #eee; position: relative; padding-left: 50% !important; text-align: right;
+                font-size: 0.9em;
+                min-height: 40px; /* Altura mínima para celdas */
+                display: flex; /* Flex para alinear verticalmente */
+                align-items: center;
+                justify-content: flex-end;
+            }
+            td:last-child { border-bottom: none; }
+            
+            td:before {
+                position: absolute; top: 50%; transform: translateY(-50%); /* Centrado vertical perfecto */
+                left: 12px; width: 45%; padding-right: 10px; white-space: nowrap; text-align: left; font-weight: bold; color: var(--color-principal);
+                content: attr(data-label); /* ¡LA CLAVE! */
+            }
+            
+            /* -- Data-labels para todas las tablas (ACTUALIZADO) -- */
+            /* Doctores Pendientes */
+            #doctores-pendientes-table td:nth-of-type(1)::before { content: "Cédula:"; }
+            #doctores-pendientes-table td:nth-of-type(2)::before { content: "Nombre:"; }
+            #doctores-pendientes-table td:nth-of-type(3)::before { content: "Especialidad:"; }
+            #doctores-pendientes-table td:nth-of-type(4)::before { content: "Acción:"; }
+             
+            /* Inventario */
+            #inventory-table-area table td:nth-of-type(1)::before { content: "Categoría:"; }
+            #inventory-table-area table td:nth-of-type(2)::before { content: "Nombre:"; }
+            #inventory-table-area table td:nth-of-type(3)::before { content: "Presentación:"; }
+            #inventory-table-area table td:nth-of-type(4)::before { content: "Stock:"; }
+            #inventory-table-area table td:nth-of-type(5)::before { content: "Mínimo:"; }
+            #inventory-table-area table td:nth-of-type(6)::before { content: "Vencimiento:"; }
+            #inventory-table-area table td:nth-of-type(7)::before { content: "Estado:"; }
+            #inventory-table-area table td:nth-of-type(8)::before { content: "Acciones:"; }
+             
+            /* Gestión de Doctores */
+            #doctor-management-table table td:nth-of-type(1)::before { content: "Nombre:"; }
+            #doctor-management-table table td:nth-of-type(2)::before { content: "Especialidad:"; }
+            #doctor-management-table table td:nth-of-type(3)::before { content: "Horario:"; }
+            #doctor-management-table table td:nth-of-type(4)::before { content: "Estado:"; }
+            #doctor-management-table table td:nth-of-type(5)::before { content: "Acciones:"; }
+             
+            /* Alertas */
+            #alertas-list-area table td:nth-of-type(1)::before { content: "Fecha:"; }
+            #alertas-list-area table td:nth-of-type(2)::before { content: "Título:"; }
+            #alertas-list-area table td:nth-of-type(3)::before { content: "Reportó:"; }
+            #alertas-list-area table td:nth-of-type(4)::before { content: "Gravedad:"; }
+            #alertas-list-area table td:nth-of-type(5)::before { content: "Acción:"; }
+
+            /* Gestión de Pacientes */
+            #patient-list-table table td:nth-of-type(1)::before { content: "Cédula:"; }
+            #patient-list-table table td:nth-of-type(2)::before { content: "Nombre:"; }
+            #patient-list-table table td:nth-of-type(3)::before { content: "Email:"; }
+            #patient-list-table table td:nth-of-type(4)::before { content: "Acción:"; }
+
+            /* Citas Pendientes (Paciente) */
+            #citas-pendientes-tabla table td:nth-of-type(1)::before { content: "Fecha:"; }
+            #citas-pendientes-tabla table td:nth-of-type(2)::before { content: "Doctor:"; }
+            #citas-pendientes-tabla table td:nth-of-type(3)::before { content: "Especialidad:"; }
+            #citas-pendientes-tabla table td:nth-of-type(4)::before { content: "Motivo:"; }
+
+            /* Citas Aceptadas (Paciente) - NUEVO */
+            #citas-aceptadas-tabla table td:nth-of-type(1)::before { content: "Fecha:"; }
+            #citas-aceptadas-tabla table td:nth-of-type(2)::before { content: "Doctor:"; }
+            #citas-aceptadas-tabla table td:nth-of-type(3)::before { content: "Especialidad:"; }
+            #citas-aceptadas-tabla table td:nth-of-type(4)::before { content: "Motivo:"; }
+
+            /* Visitas (Paciente) */
+            #visitas-tabla table td:nth-of-type(1)::before { content: "Fecha:"; }
+            #visitas-tabla table td:nth-of-type(2)::before { content: "Doctor:"; }
+            #visitas-tabla table td:nth-of-type(3)::before { content: "Diagnóstico:"; }
+            #visitas-tabla table td:nth-of-type(4)::before { content: "S. Vitales:"; }
+            #visitas-tabla table td:nth-of-type(5)::before { content: "Récipe:"; }
+        }
+        
+        /* --- ESTILOS DE NOTIFICACIÓN Y MODAL --- */
+        #toast-notification {
+            position: fixed; bottom: -100px; left: 50%;
+            transform: translateX(-50%);
+            color: white; padding: 16px 24px; border-radius: 50px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 2000; transition: bottom 0.5s ease-in-out; font-weight: 500;
+        }
+        #toast-notification.show { bottom: 30px; }
+        #toast-notification.success { background-color: #28A745; }
+        #toast-notification.error { background-color: var(--color-acento); }
+
+        #modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); z-index: 1000;
+            display: none; justify-content: center; align-items: center;
+        }
+        #modal-content {
+            background: white; padding: 30px; border-radius: 10px;
+            width: 90%; max-width: 600px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease-out;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #modal-content h2 { color: var(--color-principal); margin-top: 0; }
+        #modal-body pre, #modal-body p[style*="pre-wrap"] {
+            white-space: pre-wrap; 
+            font-family: inherit; 
+            font-size: 1.1em; 
+            line-height: 1.6;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+        #modal-body p { font-size: 1.1em; line-height: 1.6; }
+        #modal-footer {
+            text-align: right; margin-top: 20px;
+            border-top: 1px solid #eee; padding-top: 20px;
+        }
+        
+    </style>
+</head>
+<body>
+    
+    <div class="header-mobile">
+        <i class="fas fa-bars menu-toggle" onclick="toggleMenu()"></i>
+        <h1 id="mobile-header-title">Métricas</h1>
+    </div>
+
+    <div id="admin-wrapper">
+        <div id="sidebar">
+            <h2>ADMIN HOSPITAL</h2>
+            <a href="#" data-section="metricas" class="active"><i class="fas fa-chart-line"></i> Métricas Clave</a>
+            <a href="#" data-section="doctores-pendientes"><i class="fas fa-user-clock"></i> Activación Doctores</a>
+            <a href="#" data-section="gestion-doctores"><i class="fas fa-user-md"></i> Gestión de Doctores</a>
+            <a href="#" data-section="gestion-pacientes"><i class="fas fa-users"></i> Gestión de Pacientes</a>
+            <a href="#" data-section="inventario"><i class="fas fa-boxes"></i> Inventario</a>
+            <a href="#" data-section="farmacia-solicitudes"><i class="fas fa-prescription-bottle"></i> Solicitudes Farmacia</a>
+            <a href="#" data-section="censo-camas"><i class="fas fa-bed"></i> Censo de Camas</a>
+            <a href="#" data-section="alertas-epidemiologicas"><i class="fas fa-biohazard"></i> Alertas</a>
+            
+            <hr style="border-color: rgba(255, 255, 255, 0.2); margin: 20px 0;">
+            
+            <a href="#" data-section="configuracion"><i class="fas fa-cog"></i> Configuración</a>
+            
+            <a href="#" onclick="logout()" class="logout-menu-item"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+        </div>
+
+        <div id="main-content">
+            <h1 id="main-content-title">Métricas Clave</h1>
+            <div id="content-area">
+                </div>
+        </div>
+    </div>
+    
+    <div id="modal-backdrop" onclick="closeModal()">
+        <div id="modal-content" onclick="event.stopPropagation();">
+            <h2 id="modal-title">Confirmar</h2>
+            <div id="modal-body">
+                <p>¿Está seguro?</p>
+            </div>
+            <div id="modal-footer">
+                <button class="btn-principal" id="modal-btn-cancel" onclick="closeModal()">Cancelar</button>
+                <button class="btn-rojo" id="modal-btn-confirm">Aceptar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast-notification">Mensaje</div>
+    
+    <div class="overlay" onclick="toggleMenu()"></div>
+
+    <script>
+        // ¡MODIFICADO! API_BASE ahora es relativo
+        const API_BASE = '/api/admin'; 
+        const contentArea = document.getElementById('content-area');
+        const mainContentTitle = document.getElementById('main-content-title');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.querySelector('.overlay');
+        const mobileHeaderTitle = document.getElementById('mobile-header-title');
+        
+        // --- Declaraciones del Modal ---
+        const modal = document.getElementById('modal-backdrop');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalFooter = document.getElementById('modal-footer');
+        const modalBtnConfirm = document.getElementById('modal-btn-confirm');
+        const modalBtnCancel = document.getElementById('modal-btn-cancel');
+
+        // --- Lógica de Menú ---
+        function toggleMenu() {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSection('metricas');
+            
+            sidebar.addEventListener('click', (e) => {
+                e.preventDefault(); 
+                const link = e.target.closest('a'); 
+                
+                if (link) {
+                    if (link.textContent.includes('Cerrar Sesión')) {
+                        logout(); 
+                        return;
+                    }
+
+                    const section = link.getAttribute('data-section');
+                    if (section) {
+                        document.querySelectorAll('#sidebar a').forEach(l => l.classList.remove('active'));
+                        link.classList.add('active');
+                        
+                        const sectionTitle = link.innerText.trim();
+                        mainContentTitle.innerText = sectionTitle;
+                        mobileHeaderTitle.innerText = sectionTitle;
+
+                        loadSection(section);
+                        
+                        if (window.innerWidth <= 900) {
+                            toggleMenu();
+                        }
+                    }
+                }
+            });
+        });
+        
+        // --- Notificaciones Profesionales (Reemplazo de alert/confirm) ---
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast-notification');
+            toast.textContent = message;
+            toast.className = 'show'; 
+            if (type === 'error') toast.classList.add('error');
+            else toast.classList.add('success');
+            setTimeout(() => {
+                toast.className = toast.className.replace('show', '');
+            }, 3000);
+        }
+
+        function openConfirmModal(title, message, onConfirmCallback) {
+            modalTitle.innerText = title;
+            modalBody.innerHTML = `<p>${message}</p>`;
+            modalBtnConfirm.style.display = 'inline-block';
+            modalBtnCancel.innerText = 'Cancelar';
+            modalBtnConfirm.innerText = 'Sí, Confirmar';
+            
+            modalBtnConfirm.onclick = () => {
+                onConfirmCallback(); 
+                closeModal(); 
+            };
+            modal.style.display = 'flex';
+        }
+        
+        function openFormModal(title, formHtml, onConfirmCallback) {
+            modalTitle.innerText = title;
+            modalBody.innerHTML = formHtml;
+            modalBtnConfirm.style.display = 'inline-block';
+            modalBtnCancel.innerText = 'Cancelar';
+            modalBtnConfirm.innerText = 'Guardar Cambios';
+            
+            if (onConfirmCallback) {
+                modalBtnConfirm.onclick = onConfirmCallback;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function openViewModal(title, bodyHtml) {
+            modalTitle.innerText = title;
+            modalBody.innerHTML = bodyHtml;
+            modalBtnConfirm.style.display = 'none'; // Ocultar botón de confirmar
+            modalBtnCancel.innerText = 'Cerrar';
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+        // --- Fin Notificaciones/Modales ---
+
+
+        // --- Fetch Genérico ---
+        async function apiFetch(url, options = {}) {
+            const token = localStorage.getItem('token');
+            const defaultHeaders = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+
+            // ¡MODIFICADO! URL ahora es relativa, se une con API_BASE
+            const response = await fetch(`${API_BASE}${url}`, {
+                ...options,
+                headers: { ...defaultHeaders, ...options.headers }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                 showToast('Sesión expirada o permisos insuficientes.', 'error');
+                 setTimeout(logout, 1500); 
+                 throw new Error('Unauthorized');
+            }
+
+            const contentType = response.headers.get("content-type");
+            if (response.status === 404) {
+                 throw new Error(`Error 404: No se encontró la ruta API (${url}). Revise server.js.`);
+            }
+                
+            let result;
+            if (response.status === 204 || (response.headers.get('content-length') === '0' && response.ok)) {
+                 result = { msg: "Operación exitosa." };
+            } else if (contentType && contentType.indexOf("application/json") !== -1) {
+                result = await response.json();
+            } else {
+                const errorText = await response.text();
+                if (response.ok) return { msg: "Respuesta OK pero no JSON." };
+                throw new Error(`El servidor devolvió un error inesperado (no-JSON): ${errorText.substring(0, 100)}...`);
+            }
+
+            if (!response.ok) {
+                throw new Error(result.msg || `Error de API: ${response.statusText}`);
+            }
+            
+            return result;
+        }
+        
+        // --- Carga de Secciones ---
+        async function loadSection(section) {
+            contentArea.innerHTML = `<h1>Cargando...</h1>`;
+            try {
+                switch (section) {
+                    case 'metricas': await loadMetrics(); break;
+                    case 'doctores-pendientes': await loadPendingDoctors(); break;
+                    case 'gestion-doctores': await loadDoctorManagement(); break;
+                    case 'gestion-pacientes': await loadGestionPacientes(); break; 
+                    case 'inventario': await loadInventory(); break;
+                    case 'farmacia-solicitudes': await loadPharmacyRequests(); break;
+                    case 'censo-camas': await loadCensoCamas(); break;
+                    case 'alertas-epidemiologicas': await loadAlertas(); break;
+                    case 'configuracion': await loadConfiguracion(); break;
+                    default: contentArea.innerHTML = '<h1>Sección no encontrada.</h1>';
+                }
+            } catch (error) {
+                if (error.message !== 'Unauthorized') {
+                   contentArea.innerHTML = `<h1>⚠️ Error de Carga</h1><p>${error.message}</p><p>Verifique que su servidor Node.js y la base de datos estén funcionando correctamente.</p>`;
+                }
+            }
+        }
+        
+        // --- 1. MÉTRICAS CLAVE ---
+        async function loadMetrics() {
+            const data = await apiFetch(`/metricas`);
+            const totalCamas = 140;
+            const camasLibres = data.camasLibres || 0;
+            contentArea.innerHTML = `
+                <div class="metricas-grid">
+                    <div class="metric-card">
+                        <h3>Pacientes Registrados</h3>
+                        <p>${data.totalPacientes || 0}</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Doctores Activos</h3>
+                        <p>${data.totalDoctoresActivos || 0}</p>
+                    </div>
+                    <div class="metric-card" style="border-color: var(--color-acento);">
+                        <h3>Doctores Pendientes</h3>
+                        <p>${data.totalDoctoresPendientes || 0}</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Citas Pendientes</h3>
+                        <p>${data.citasPendientes || 0}</p>
+                    </div>
+                     <div class="metric-card">
+                        <h3>Camas Libres</h3>
+                        <p>${camasLibres}</p>
+                        <span style="font-size: 1em; color: var(--color-texto-oscuro);">de <strong>${totalCamas}</strong> Totales</span>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Solic. Farmacia</h3>
+                        <p>${data.medsPendientes || 0}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // --- 2. ACTIVACIÓN DE DOCTORES ---
+        async function loadPendingDoctors() {
+            const doctores = await apiFetch(`/doctores/pendientes`);
+            let tableHTML = `
+                <p>${doctores.length > 0 ? 'Los siguientes doctores requieren aprobación para acceder al sistema.' : 'No hay solicitudes de doctores pendientes.'}</p>
+                <table id="doctores-pendientes-table">
+                    <thead>
+                        <tr>
+                            <th>Cédula</th>
+                            <th>Nombre Completo</th>
+                            <th>Especialidad</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            doctores.forEach(doc => {
+                tableHTML += `
+                    <tr>
+                        <td data-label="Cédula">${doc.cedula}</td>
+                        <td data-label="Nombre">${doc.nombre} ${doc.apellido}</td>
+                        <td data-label="Especialidad">${doc.especialidad}</td>
+                        <td data-label="Acción">
+                            <button class="btn-principal btn-principal-small" onclick="handleDoctorAction(${doc.id_doctor}, 'activar')">Activar</button>
+                            <button class="btn-rojo btn-rojo-small" onclick="handleDoctorAction(${doc.id_doctor}, 'rechazar')">Rechazar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableHTML += `</tbody></table>`;
+            contentArea.innerHTML = tableHTML;
+        }
+        
+        async function handleDoctorAction(id, action) {
+            const confirmMsg = (action === 'activar') ? 
+                '¿Está seguro de activar este doctor? Se le enviará un correo de bienvenida.' : 
+                '¿Está seguro de rechazar la solicitud de este doctor?';
+                
+            openConfirmModal('Confirmar Acción', confirmMsg, async () => {
+                try {
+                    await apiFetch(`/doctores/${id}/${action}`, { method: 'PUT' });
+                    showToast(`Doctor ${action} exitosamente.`, 'success');
+                    loadPendingDoctors(); 
+                } catch (error) {
+                    showToast(`Error al procesar acción: ${error.message}`, 'error');
+                }
+            });
+        }
+        
+        // --- 3. GESTIÓN DE DOCTORES ---
+        async function loadDoctorManagement() {
+            contentArea.innerHTML = `
+                <div class="form-container" style="max-width: 100%;">
+                    <input type="text" id="doctor-search" placeholder="Buscar por Cédula o Nombre..." style="width: 300px; display: inline-block;">
+                    <button class="btn-principal" onclick="fetchDoctorManagement()">Buscar</button>
+                </div>
+                <div id="doctor-management-table">Cargando doctores...</div>
+            `;
+            fetchDoctorManagement();
+        }
+        
+        async function fetchDoctorManagement() {
+            const tableArea = document.getElementById('doctor-management-table');
+            const searchTerm = document.getElementById('doctor-search') ? document.getElementById('doctor-search').value : '';
+            tableArea.innerHTML = '<p>Cargando lista...</p>';
+            
+            const doctores = await apiFetch(`/doctores?search=${encodeURIComponent(searchTerm)}`);
+            
+            if (doctores.length === 0) {
+                 tableArea.innerHTML = '<table><tbody><tr><td class="empty-table">No se encontraron doctores.</td></tr></tbody></table>';
+                 return;
+            }
+            
+            let tableHTML = `
+                <p>Gestione el estado de todos los doctores registrados en el sistema.</p>
+                <table> <thead>
+                        <tr>
+                            <th>Nombre Completo</th>
+                            <th>Especialidad</th>
+                            <th>Horario</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            doctores.forEach(doc => {
+                let actionButton = '';
+                if(doc.estado === 'Activo') {
+                    actionButton = `<button class="btn-rojo btn-rojo-small" onclick="handleInactivateDoctor(${doc.id_doctor})">Inactivar</button>`;
+                } else if(doc.estado === 'Inactivo' || doc.estado === 'Rechazado') {
+                    actionButton = `<button class="btn-principal btn-principal-small" onclick="handleDoctorAction(${doc.id_doctor}, 'activar')">Re-Activar</button>`;
+                } else if(doc.estado === 'Pendiente') {
+                     actionButton = `<button class="btn-principal btn-principal-small" onclick="handleDoctorAction(${doc.id_doctor}, 'activar')">Activar</button>`;
+                }
+                const docData = JSON.stringify(doc);
+                tableHTML += `
+                    <tr>
+                        <td data-label="Nombre">${doc.nombre} ${doc.apellido}</td>
+                        <td data-label="Especialidad">${doc.especialidad}</td>
+                        <td data-label="Horario">${doc.horario || 'No Asignado'}</td>
+                        <td data-label="Estado">${doc.estado}</td>
+                        <td data-label="Acción">
+                            <button class="btn-principal btn-principal-small" onclick='viewDoctorInfo(${docData})'>Ver Info</button>
+                            ${actionButton}
+                        </td>
+                    </tr>
+                `;
+            });
+            tableHTML += `</tbody></table>`;
+            tableArea.innerHTML = tableHTML;
+        }
+
+        function viewDoctorInfo(doc) {
+            const bodyHtml = `
+                <p><strong>Nombre:</strong> ${doc.nombre} ${doc.apellido}</p>
+                <p><strong>Cédula:</strong> ${doc.cedula}</p>
+                <p><strong>Email:</strong> ${doc.email}</p>
+                <p><strong>Teléfono:</strong> ${doc.telefono || 'N/R'}</p>
+                <hr>
+                <p><strong>Especialidad:</strong> ${doc.especialidad}</p>
+                <p><strong>ID Colegiatura (MPPS):</strong> ${doc.id_colegiatura || 'N/R'}</p>
+                <p><strong>Horario:</strong> ${doc.horario || 'No Asignado'}</p>
+                <p><strong>Estado:</strong> ${doc.estado}</p>
+            `;
+            openViewModal(`Información de Dr(a). ${doc.apellido}`, bodyHtml);
+        }
+
+        async function handleInactivateDoctor(id) {
+            openConfirmModal('Confirmar Inactivación', '¿Está seguro de inactivar esta cuenta de doctor?', async () => {
+                try {
+                    await apiFetch(`/doctores/${id}/inactivar`, { method: 'PUT' });
+                    showToast('Doctor inactivado exitosamente.', 'success');
+                    fetchDoctorManagement();
+                } catch (error) {
+                    showToast(`Error: ${error.message}`, 'error');
+                }
+            });
+        }
+        
+        // --- 4. GESTIÓN DE PACIENTES (¡ACTUALIZADO!) ---
+        async function loadGestionPacientes() {
+            contentArea.innerHTML = `
+                <div class="form-container" style="max-width: 100%;">
+                    <input type="text" id="cedula-search" placeholder="Buscar por número de Cédula (Ej: 1234567)" style="width: 300px; display: inline-block;">
+                    <button class="btn-principal" onclick="fetchGestionPacientes()">Buscar</button>
+                </div>
+                <div id="patient-list-table"></div>
+            `;
+            fetchGestionPacientes();
+        }
+        
+        async function fetchGestionPacientes() {
+            const cedula = document.getElementById('cedula-search').value.trim();
+            const tableArea = document.getElementById('patient-list-table');
+            tableArea.innerHTML = '<p>Cargando lista...</p>';
+
+            const url = cedula ? `/pacientes?cedula=V${cedula}` : `/pacientes`;
+            const pacientes = await apiFetch(url);
+            
+            let tableHTML = `
+                <table>
+                    <thead><tr><th>Cédula</th><th>Nombre Completo</th><th>Email</th><th>Acción</th></tr></thead>
+                    <tbody>
+            `;
+            pacientes.forEach(p => {
+                tableHTML += `
+                    <tr>
+                        <td data-label="Cédula">${p.cedula}</td>
+                        <td data-label="Nombre">${p.nombre} ${p.apellido}</td>
+                        <td data-label="Email">${p.email}</td>
+                        <td data-label="Acción">
+                            <button class="btn-rojo btn-rojo-small" onclick="viewPatientHistory(${p.id_usuario})">Ver Información</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableHTML += `</tbody></table>`;
+            tableArea.innerHTML = tableHTML;
+        }
+        
+        // ¡FUNCIÓN MODIFICADA!
+        async function viewPatientHistory(id_usuario) {
+            contentArea.innerHTML = `<h1>Cargando historial...</h1>`;
+            try {
+                const data = await apiFetch(`/pacientes/${id_usuario}/historial-registro`);
+                
+                // --- INICIO: HTML REORGANIZADO ---
+                contentArea.innerHTML = `
+                    <h1>Gestión de: ${data.nombre} ${data.apellido}</h1>
+                    <button class="btn-rojo" onclick="loadGestionPacientes()" style="margin-bottom: 20px;">← Volver a la Lista</button>
+                    
+                    <div class="metricas-grid">
+                        <div class="metric-card historial-card" style="text-align: left;">
+                            <h3 style="font-size: 1.2em;"><i class="fas fa-user"></i> Datos Personales</h3>
+                            <p><strong>Cédula:</strong> ${data.cedula}</p>
+                            <p><strong>Teléfono:</strong> ${data.telefono || 'N/R'}</p>
+                            <p><strong>Email:</strong> ${data.email || 'N/R'}</p>
+                            <p><strong>Dirección:</strong> ${data.direccion_base || 'N/R'}</p>
+                        </div>
+                        
+                        <div class="metric-card historial-card" style="text-align: left; border-color: var(--color-acento);">
+                            <h3 style="font-size: 1.2em; color: var(--color-acento);"><i class="fas fa-ambulance"></i> Contacto de Emergencia</h3>
+                            <p><strong>Nombre:</strong> ${data.contacto_emergencia_nombre || 'No registra'}</p>
+                            <p><strong>Teléfono:</strong> ${data.contacto_emergencia_telefono || 'No registra'}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-container" style="max-width: 100%;">
+                        <h2>Datos de Registro y Antecedentes (Reportados por Paciente)</h2>
+                        
+                        <div class="form-grid"> 
+                            
+                            <div class_A="historial-card">
+                                <h4>Datos Personales y Sociales</h4>
+                                <p><strong>Dir. Detallada:</strong> ${data.direccion_detallada || 'N/R'}</p>
+                                <p><strong>Socioeconómico:</strong> ${data.datos_socioeconomicos || 'N/R'}</p>
+                                <p><strong>Estudio:</strong> ${data.datos_estudio || 'N/R'}</p>
+                                <br>
+                                <h4>Hábitos</h4>
+                                <p><strong>Alcohol:</strong> ${data.habito_alcohol ? 'Sí' : 'No'}</p>
+                                <p><strong>Tabaco:</strong> ${data.habito_tabaco ? 'Sí' : 'No'}</p>
+                            </div>
+                            
+                            <div class="historial-card">
+                                <h4>Historial Clínico</h4>
+                                <p><strong>Alergias:</strong> ${data.alergias || 'No registra'}</p>
+                                <p><strong>Cond. Crónica:</strong> ${data.condicion_cronica || 'Ninguna'}</p>
+                                <p><strong>Cirugías Previas:</strong> ${data.cirugia_previa || 'Ninguna'}</p>
+                                <p><strong>Meds. Actuales:</strong> ${data.medicamentos_actuales || 'Ninguno'}</p>
+                                <p><strong>Ant. Familiares:</strong> ${data.antecedentes_familiares || 'Ninguno'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="paciente-citas-pendientes-area" style="margin-top: 20px;">
+                        <h2><i class="fas fa-clock"></i> Citas Pendientes del Paciente</h2>
+                        <div id="citas-pendientes-tabla">Cargando citas...</div>
+                    </div>
+                    
+                    <div id="paciente-citas-aceptadas-area" style="margin-top: 20px;">
+                        <h2><i class="fas fa-calendar-check"></i> Citas Aceptadas (Próximas)</h2>
+                        <div id="citas-aceptadas-tabla">Cargando citas...</div>
+                    </div>
+
+                    <div id="paciente-visitas-area" style="margin-top: 20px;">
+                        <h2><i class="fas fa-history"></i> Historial de Visitas Médicas</h2>
+                        <div id="visitas-tabla">Cargando historial de visitas...</div>
+                    </div>
+                `;
+                
+                fetchPacienteCitasPendientes(data.id_paciente); 
+                fetchPacienteCitasAceptadas(data.id_paciente); // <-- ¡NUEVA LLAMADA!
+                fetchPacienteVisitas(data.id_paciente);
+
+            } catch (error) {
+                contentArea.innerHTML = `<h1>⚠️ Error</h1><p>${error.message}</p><button class="btn-rojo" onclick="loadGestionPacientes()">← Volver</button>`;
+            }
+        }
+
+        async function fetchPacienteCitasPendientes(id_paciente) {
+            const tableArea = document.getElementById('citas-pendientes-tabla');
+            try {
+                const citas = await apiFetch(`/pacientes/${id_paciente}/citas-pendientes`);
+                if (citas.length === 0) {
+                    tableArea.innerHTML = '<table><tbody><tr><td class="empty-table">Este paciente no tiene citas pendientes.</td></tr></tbody></table>';
+                    return;
+                }
+                let tableHTML = `
+                    <table>
+                        <thead><tr>
+                            <th>Fecha y Hora</th>
+                            <th>Doctor Asignado</th>
+                            <th>Especialidad</th>
+                            <th>Motivo</th>
+                        </tr></thead>
+                        <tbody>
+                `;
+                citas.forEach(c => {
+                    const fecha = new Date(c.fecha_hora_consulta).toLocaleString('es-VE');
+                    tableHTML += `
+                        <tr>
+                            <td data-label="Fecha">${fecha}</td>
+                            <td data-label="Doctor">${c.doctor_nombre} ${c.doctor_apellido}</td>
+                            <td data-label="Especialidad">${c.especialidad}</td>
+                            <td data-label="Motivo">${c.motivo_consulta}</td>
+                        </tr>
+                    `;
+                });
+                tableHTML += `</tbody></table>`;
+                tableArea.innerHTML = tableHTML;
+            } catch (error) {
+                tableArea.innerHTML = `<p style="color:red;">Error al cargar las citas pendientes: ${error.message}</p>`;
+            }
+        }
+        
+        // ¡NUEVA FUNCIÓN!
+        async function fetchPacienteCitasAceptadas(id_paciente) {
+            const tableArea = document.getElementById('citas-aceptadas-tabla');
+            try {
+                // Llama a la nueva ruta del API
+                const citas = await apiFetch(`/pacientes/${id_paciente}/citas-aceptadas`);
+                if (citas.length === 0) {
+                    tableArea.innerHTML = '<table><tbody><tr><td class="empty-table">Este paciente no tiene citas aceptadas.</td></tr></tbody></table>';
+                    return;
+                }
+                let tableHTML = `
+                    <table>
+                        <thead><tr>
+                            <th>Fecha y Hora</th>
+                            <th>Doctor Asignado</th>
+                            <th>Especialidad</th>
+                            <th>Motivo</th>
+                        </tr></thead>
+                        <tbody>
+                `;
+                citas.forEach(c => {
+                    const fecha = new Date(c.fecha_hora_consulta).toLocaleString('es-VE');
+                    tableHTML += `
+                        <tr>
+                            <td data-label="Fecha">${fecha}</td>
+                            <td data-label="Doctor">${c.doctor_nombre} ${c.doctor_apellido}</td>
+                            <td data-label="Especialidad">${c.especialidad}</td>
+                            <td data-label="Motivo">${c.motivo_consulta}</td>
+                        </tr>
+                    `;
+                });
+                tableHTML += `</tbody></table>`;
+                tableArea.innerHTML = tableHTML;
+            } catch (error) {
+                tableArea.innerHTML = `<p style="color:red;">Error al cargar las citas aceptadas: ${error.message}</p>`;
+            }
+        }
+
+        async function fetchPacienteVisitas(id_paciente) {
+            const tableArea = document.getElementById('visitas-tabla');
+            try {
+                const visitas = await apiFetch(`/paciente/${id_paciente}/visitas`);
+                if (visitas.length === 0) {
+                    tableArea.innerHTML = '<table><tbody><tr><td class="empty-table">Este paciente no tiene historial de visitas.</td></tr></tbody></table>';
+                    return;
+                }
+                let tableHTML = `
+                    <table>
+                        <thead><tr>
+                            <th>Fecha</th>
+                            <th>Doctor</th>
+                            <th>Diagnóstico</th>
+                            <th>Signos Vitales</th>
+                            <th>Tuvo Récipe</th>
+                        </tr></thead>
+                        <tbody>
+                `;
+                visitas.forEach(v => {
+                    const fecha = new Date(v.fecha_visita).toLocaleString('es-VE');
+                    const vitales = `${v.presion_arterial || 'N/R'} | ${v.saturacion_oxigeno || 'N/R'}%`;
+                    tableHTML += `
+                        <tr>
+                            <td data-label="Fecha">${fecha}</td>
+                            <td data-label="Doctor">${v.doctor_nombre} ${v.doctor_apellido}</td>
+                            <td data-label="Diagnóstico">${v.diagnostico}</td>
+                            <td data-label="S. Vitales">${vitales}</td>
+                            <td data-label="Récipe">${v.tiene_prescripcion ? 'Sí' : 'No'}</td>
+                        </tr>
+                    `;
+                });
+                tableHTML += `</tbody></table>`;
+                tableArea.innerHTML = tableHTML;
+            } catch (error) {
+                tableArea.innerHTML = `<p style="color:red;">Error al cargar el historial de visitas: ${error.message}</p>`;
+            }
+        }
+
+
+        // --- 5. INVENTARIO ---
+        async function loadInventory() {
+            contentArea.innerHTML = `
+                <button class="btn-principal" onclick="showAddInventoryForm()">+ Añadir Nuevo Ítem</button>
+                <div id="inventory-form-area" style="margin-top: 20px;"></div>
+                <div id="inventory-table-area">Cargando inventario...</div>
+            `;
+            fetchInventory();
+        }
+        
+        function hideInventoryForm() {
+            document.getElementById('inventory-form-area').innerHTML = '';
+        }
+
+        function toggleMedicamentoFields(categoria) {
+            const camposMed = document.getElementById('campos-medicamento');
+            if (camposMed) {
+                camposMed.style.display = (categoria === 'Medicamento') ? 'block' : 'none';
+            }
+        }
+
+        function showAddInventoryForm() {
+            const formArea = document.getElementById('inventory-form-area');
+            formArea.innerHTML = `
+                <form id="add-inventory-form" class="form-container">
+                    <h2>Añadir Ítem al Inventario</h2>
+                    <div class="form-grid">
+                        <div>
+                            <label for="inv-categoria">Categoría:</label>
+                            <select id="inv-categoria" onchange="toggleMedicamentoFields(this.value)" required>
+                                <option value="">Seleccione...</option>
+                                <option value="Medicamento">Medicamento</option>
+                                <option value="Material Descartable">Material Descartable (Jeringas, Guantes)</option>
+                                <option value="Insumo Quirúrgico">Insumo Quirúrgico</option>
+                                <option value="Limpieza">Limpieza</option>
+                                <option value="Oficina">Oficina</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="inv-nombre">Nombre del Ítem:</label>
+                            <input type="text" id="inv-nombre" placeholder="Ej: Amoxicilina / Jeringas 5ml" required>
+                        </div>
+                    </div>
+                    <label for="inv-presentacion">Descripción / Presentación:</label>
+                    <input type="text" id="inv-presentacion" placeholder="Ej: Caja de 100 unidades / Botella 1L">
+                    <div id="campos-medicamento" style="display: none; background: #f9f9f9; padding: 10px; border-radius: 5px;">
+                        <label for="inv-principio-activo">Principio Activo (Opcional):</label>
+                        <input type="text" id="inv-principio-activo" placeholder="Ej: Amoxicilina Trihidrato">
+                        <label for="inv-concentracion">Concentración (Opcional):</label>
+                        <input type="text" id="inv-concentracion" placeholder="Ej: 500mg">
+                    </div>
+                    <div class="form-grid" style="margin-top: 15px;">
+                        <div>
+                            <label for="inv-stock-actual">Stock Actual:</label>
+                            <input type="number" id="inv-stock-actual" value="0" required>
+                        </div>
+                        <div>
+                            <label for="inv-stock-minimo">Stock Mínimo (Alerta):</label>
+                            <input type="number" id="inv-stock-minimo" value="10" required>
+                        </div>
+                        <div>
+                            <label for="inv-vencimiento">Fecha Vencimiento (Opcional):</label>
+                            <input type="date" id="inv-vencimiento">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-principal">Guardar Ítem</button>
+                    <button type="button" class="btn-rojo" onclick="hideInventoryForm()">Cancelar</button>
+                </form>
+            `;
+            document.getElementById('add-inventory-form').addEventListener('submit', handleAddInventory);
+            formArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function handleAddInventory(e) {
+            e.preventDefault();
+            const categoria = document.getElementById('inv-categoria').value;
+            const itemData = {
+                categoria: categoria,
+                nombre: document.getElementById('inv-nombre').value,
+                descripcion_presentacion: document.getElementById('inv-presentacion').value,
+                stock_actual: parseInt(document.getElementById('inv-stock-actual').value),
+                stock_minimo: parseInt(document.getElementById('inv-stock-minimo').value),
+                fecha_vencimiento: document.getElementById('inv-vencimiento').value || null,
+                principio_activo: document.getElementById('inv-principio-activo').value,
+                concentracion: document.getElementById('inv-concentracion').value
+            };
+            try {
+                await apiFetch(`/inventario`, { method: 'POST', body: JSON.stringify(itemData) });
+                showToast('Ítem añadido al inventario.', 'success');
+                hideInventoryForm(); 
+                fetchInventory(); 
+            } catch (error) {
+                showToast(`Error al añadir ítem: ${error.message}`, 'error');
+            }
+        }
+
+        async function fetchInventory() {
+            const tableArea = document.getElementById('inventory-table-area');
+            tableArea.innerHTML = '<p>Cargando inventario...</p>';
+            const inventario = await apiFetch(`/inventario`);
+            let tableHTML = `
+                <table>
+                    <thead><tr>
+                        <th>Categoría</th>
+                        <th>Nombre</th>
+                        <th>Presentación</th>
+                        <th>Stock</th>
+                        <th>Mínimo</th>
+                        <th>Vencimiento</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr></thead>
+                    <tbody>
+            `;
+            if (inventario.length === 0) {
+                tableHTML += '<tr><td colspan="8" class="empty-table">No hay ítems en el inventario.</td></tr>';
+            }
+            inventario.forEach(item => {
+                const isLow = item.stock_actual <= item.stock_minimo;
+                const estado = isLow ? `<span style="color: var(--color-acento); font-weight: bold;">ALERTA BAJA</span>` : 'Suficiente';
+                const itemData = JSON.stringify(item); 
+                tableHTML += `
+                    <tr>
+                        <td data-label="Categoría">${item.categoria}</td>
+                        <td data-label="Nombre">${item.nombre} ${item.categoria === 'Medicamento' ? `(${item.concentracion || 'N/A'})` : ''}</td>
+                        <td data-label="Presentación">${item.descripcion_presentacion || 'N/A'}</td>
+                        <td data-label="Stock">${item.stock_actual}</td>
+                        <td data-label="Mínimo">${item.stock_minimo}</td>
+                        <td data-label="Venc.">${item.fecha_vencimiento ? new Date(item.fecha_vencimiento).toLocaleDateString('es-VE') : 'N/A'}</td>
+                        <td data-label="Estado">${estado}</td>
+                        <td data-label="Acción">
+                            <button class="btn-principal btn-principal-small" onclick='showEditInventoryForm(${itemData})'>
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-rojo btn-rojo-small" onclick="handleDeleteInventory(${item.id_recurso})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableHTML += `</tbody></table>`;
+            tableArea.innerHTML = tableHTML;
+        }
+        
+        function showEditInventoryForm(item) {
+            const fecha_vencimiento = item.fecha_vencimiento ? new Date(item.fecha_vencimiento).toISOString().split('T')[0] : '';
+            const isMedicamento = item.categoria === 'Medicamento';
+            const formHtml = `
+                <form id="edit-inventory-form" class="form-container" style="box-shadow: none; padding: 0;">
+                    <input type="hidden" id="edit-inv-id" value="${item.id_recurso}">
+                    <div class="form-grid">
+                        <div>
+                            <label for="edit-inv-categoria">Categoría:</label>
+                            <select id="edit-inv-categoria" onchange="toggleMedicamentoFields(this.value)" required>
+                                <option value="Medicamento" ${item.categoria === 'Medicamento' ? 'selected' : ''}>Medicamento</option>
+                                <option value="Material Descartable" ${item.categoria === 'Material Descartable' ? 'selected' : ''}>Material Descartable</option>
+                                <option value="Insumo Quirúrgico" ${item.categoria === 'Insumo Quirúrgico' ? 'selected' : ''}>Insumo Quirúrgico</option>
+                                <option value="Limpieza" ${item.categoria === 'Limpieza' ? 'selected' : ''}>Limpieza</option>
+                                <option value="Oficina" ${item.categoria === 'Oficina' ? 'selected' : ''}>Oficina</option>
+                                <option value="Otro" ${item.categoria === 'Otro' ? 'selected' : ''}>Otro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="edit-inv-nombre">Nombre del Ítem:</label>
+                            <input type="text" id="edit-inv-nombre" value="${item.nombre}" required>
+                        </div>
+                    </div>
+                    <label for="edit-inv-presentacion">Descripción / Presentación:</label>
+                    <input type="text" id="edit-inv-presentacion" value="${item.descripcion_presentacion || ''}">
+                    <div id="campos-medicamento" style="display: ${isMedicamento ? 'block' : 'none'}; background: #f9f9f9; padding: 10px; border-radius: 5px;">
+                        <label for="edit-inv-principio-activo">Principio Activo:</label>
+                        <input type="text" id="edit-inv-principio-activo" value="${item.principio_activo || ''}">
+                        <label for="edit-inv-concentracion">Concentración:</label>
+                        <input type="text" id="edit-inv-concentracion" value="${item.concentracion || ''}">
+                    </div>
+                    <div class="form-grid" style="margin-top: 15px;">
+                        <div>
+                            <label for="edit-inv-stock-actual">Stock Actual:</label>
+                            <input type="number" id="edit-inv-stock-actual" value="${item.stock_actual}" required>
+                        </div>
+                        <div>
+                            <label for="edit-inv-stock-minimo">Stock Mínimo:</label>
+                            <input type="number" id="edit-inv-stock-minimo" value="${item.stock_minimo}" required>
+                        </div>
+                        <div>
+                            <label for="edit-inv-vencimiento">Fecha Vencimiento:</label>
+                            <input type="date" id="edit-inv-vencimiento" value="${fecha_vencimiento}">
+                        </div>
+                    </div>
+                </form>
+            `;
+            openFormModal(`Modificar Ítem: ${item.nombre}`, formHtml, () => {
+                handleUpdateInventory();
+            });
+        }
+        
+        async function handleUpdateInventory() {
+            const id_recurso = document.getElementById('edit-inv-id').value;
+            const categoria = document.getElementById('edit-inv-categoria').value;
+            const itemData = {
+                categoria: categoria,
+                nombre: document.getElementById('edit-inv-nombre').value,
+                descripcion_presentacion: document.getElementById('edit-inv-presentacion').value,
+                stock_actual: parseInt(document.getElementById('edit-inv-stock-actual').value),
+                stock_minimo: parseInt(document.getElementById('edit-inv-stock-minimo').value),
+                fecha_vencimiento: document.getElementById('edit-inv-vencimiento').value || null,
+                principio_activo: document.getElementById('edit-inv-principio-activo').value,
+                concentracion: document.getElementById('edit-inv-concentracion').value
+            };
+            try {
+                await apiFetch(`/inventario/${id_recurso}`, { method: 'PUT', body: JSON.stringify(itemData) });
+                showToast('Ítem actualizado.', 'success');
+                closeModal();
+                fetchInventory(); 
+            } catch (error) {
+                showToast(`Error al actualizar: ${error.message}`, 'error');
+            }
+        }
+        
+        async function handleDeleteInventory(id_recurso) {
+            openConfirmModal('Confirmar Eliminación', '¿Está seguro de eliminar este ítem del inventario? Esta acción es irreversible.', async () => {
+                try {
+                    await apiFetch(`/inventario/${id_recurso}`, { method: 'DELETE' });
+                    showToast('Ítem eliminado.', 'success');
+                    fetchInventory();
+                } catch (error) {
+                    showToast(`Error: ${error.message}`, 'error');
+                }
+            });
+        }
+
+        // --- 6. SOLICITUDES DE FARMACIA ---
+        async function loadPharmacyRequests() {
+            const solicitudes = await apiFetch(`/farmacia/solicitudes/pendientes`);
+            let tableHTML = `
+                <p>Solicitudes de pacientes pendientes por procesar.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Paciente (Cédula)</th>
+                            <th>Fecha</th>
+                            <th>Receta</th>
+                            <th>Detalle Solicitud</th> <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            solicitudes.forEach(sol => {
+                const descripcion = JSON.stringify(sol.descripcion_solicitud || 'N/A');
+                tableHTML += `
+                    <tr>
+                        <td data-label="Paciente">${sol.paciente_nombre} ${sol.paciente_apellido} (${sol.cedula})</td>
+                        <td data-label="Fecha">${new Date(sol.fecha_solicitud).toLocaleDateString()}</td>
+                        <td data-label="Receta"><a href="/uploads/recetas/${sol.receta_adjunta}" target="_blank" class="btn-principal btn-principal-small">Ver Receta</a></td>
+                        <td data-label="Detalle">
+                            <button class="btn-principal btn-principal-small" onclick='viewSolicitudDetalle(${descripcion})'>
+                                <i class="fas fa-eye"></i> Ver Detalle
+                            </button>
+                        </td>
+                        <td data-label="Acción">
+                            <button class="btn-principal btn-principal-small" style="background: #28a745;" onclick="handleProcessRequest(${sol.id_solicitud}, 'Entregada')">Entregar</button>
+                            <button class="btn-rojo btn-rojo-small" onclick="handleProcessRequest(${sol.id_solicitud}, 'Rechazada')">Rechazar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableHTML += `</tbody></table>`;
+            contentArea.innerHTML = tableHTML;
+        }
+        
+        function viewSolicitudDetalle(descripcion) {
+            const bodyHtml = `<p style="white-space: pre-wrap; font-family: inherit; font-size: 1.1em; line-height: 1.6; background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #eee;">${descripcion}</p>`;
+            openViewModal('Detalle de Solicitud', bodyHtml);
+        }
+        
+        async function handleProcessRequest(id, estado) {
+            openConfirmModal('Confirmar Solicitud', `¿Confirma el cambio de estado a "${estado}"?`, async () => {
+                try {
+                    await apiFetch(`/farmacia/solicitudes/${id}/actualizar`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ nuevo_estado: estado })
+                    });
+                    showToast(`Solicitud ${id} actualizada.`, 'success');
+                    loadPharmacyRequests(); 
+                } catch (error) {
+                    showToast(`Error al procesar: ${error.message}`, 'error');
+                }
+            });
+        }
+        
+        // --- 7. CENSO DE CAMAS ---
+        async function loadCensoCamas() {
+            const camas = await apiFetch(`/camas`);
+            let censoHTML = `<div id="censo-grid" class="censo-grid">`;
+            camas.forEach(cama => {
+                let className = `cama-${cama.estado.replace(' ', '')}`; 
+                let details = '';
+                const camaData = JSON.stringify(cama);
+                if (cama.estado === 'Ocupada') {
+                    details = `OCUPADA POR:\nPaciente: ${cama.paciente_nombre || 'N/A'} ${cama.paciente_apellido || ''} (CI: ${cama.paciente_cedula || 'N/A'})\nDoctor: ${cama.doctor_nombre || 'N/A'} ${cama.doctor_apellido || ''}\nMotivo: ${cama.motivo_ingreso || 'N/R'}`;
+                } else if (cama.estado === 'Limpieza') {
+                    className = 'cama-Limpieza';
+                    details = `Requiere Limpieza. Ubicación: ${cama.ubicacion}`;
+                } else {
+                    className = 'cama-Libre';
+                    details = `Cama Disponible. Ubicación: ${cama.ubicacion}`;
+                }
+                censoHTML += `
+                    <div class="cama-item ${className}" 
+                         title="${details}" 
+                         onclick='handleCamaClick(${camaData})'> <strong>Cama ${cama.numero_cama}</strong>
+                        <p>${cama.estado}</p>
+                    </div>
+                `;
+            });
+            censoHTML += `</div>`;
+            contentArea.innerHTML = censoHTML;
+        }
+        
+        async function handleCamaClick(camaData) {
+            const id_cama = camaData.id_cama;
+            const estado_actual = camaData.estado;
+            let formHtml = '';
+            let titulo = `Gestionar Cama ${camaData.numero_cama}`;
+            
+            if (estado_actual === 'Ocupada') {
+                const fechaIngreso = camaData.fecha_ingreso ? new Date(camaData.fecha_ingreso).toLocaleString('es-VE') : 'No registrada';
+                formHtml = `
+                    <p><strong><i class="fas fa-calendar-alt"></i> Fecha de Ingreso:</strong> ${fechaIngreso}</p>
+                    <hr>
+                    <p><strong><i class="fas fa-user-injured"></i> Paciente:</strong> ${camaData.paciente_nombre || 'N/A'} ${camaData.paciente_apellido || ''}</p>
+                    <p><strong><i class="fas fa-id-card"></i> Cédula Paciente:</strong> ${camaData.paciente_cedula || 'N/A'}</p>
+                    <p><strong><i class="fas fa-user-md"></i> Doctor a Cargo:</strong> ${camaData.doctor_nombre || 'N/A'} ${camaData.doctor_apellido || ''}</p>
+                    <p><strong><i class="fas fa-id-card"></i> Cédula Doctor:</strong> ${camaData.doctor_cedula || 'N/R'}</p>
+                    <p><strong><i class="fas fa-clipboard"></i> Motivo Ingreso:</strong> ${camaData.motivo_ingreso || 'No registrado'}</p>
+                    <hr style="margin: 20px 0;">
+                    <p>Para desocupar esta cama, presione "Liberar". El estado cambiará a "Limpieza".</p>
+                `;
+                openConfirmModal(titulo, formHtml, async () => {
+                    await updateCamaEstado(id_cama, 'Limpieza');
+                });
+                modalBtnConfirm.innerText = 'Sí, Liberar Cama';
+                return;
+            }
+            
+            formHtml = `
+                <p>Estado Actual: <strong>${estado_actual}</strong></p>
+                <div class="form-container" style="box-shadow: none; padding: 0;">
+                    <form id="cama-form" onsubmit="event.preventDefault()">
+                        <label for="cama-accion">Seleccione Acción:</label>
+                        <select id="cama-accion" onchange="toggleCamaForm(this.value)">
+                            <option value="">Seleccione...</option>
+                            ${estado_actual === 'Libre' ? '<option value="Ocupada">Ocupar Cama</option>' : ''}
+                            ${estado_actual === 'Limpieza' ? '<option value="Libre">Marcar como Limpia (Disponible)</option>' : ''}
+                        </select>
+                        
+                        <div id="cama-ocupar-detalle" style="display: none; margin-top: 15px;">
+                            <label for="cama-paciente-cedula">Cédula Paciente (Ej: V1234567):</label>
+                            <input type="text" id="cama-paciente-cedula">
+                            <label for="cama-doctor-cedula">Cédula Doctor (Ej: V7654321):</label>
+                            <input type="text" id="cama-doctor-cedula">
+                            <label for="cama-motivo">Motivo de Ingreso:</label>
+                            <input type="text" id="cama-motivo">
+                        </div>
+                    </form>
+                </div>
+            `;
+            openFormModal(titulo, formHtml, async () => {
+                await handleCamaFormSubmit(id_cama);
+            });
+        }
+        
+        async function handleCamaFormSubmit(id_cama) {
+            const nuevoEstado = document.getElementById('cama-accion').value;
+            if (!nuevoEstado) return showToast('Debe seleccionar una acción.', 'error');
+            
+            let fk_paciente_id = null;
+            let fk_doctor_id = null;
+            let motivo_ingreso = '';
+
+            try {
+                if (nuevoEstado === 'Ocupada') {
+                    const cedulaPac = document.getElementById('cama-paciente-cedula').value;
+                    const cedulaDoc = document.getElementById('cama-doctor-cedula').value;
+                    if (!cedulaPac || !cedulaDoc) return showToast('Cédula de paciente y doctor son requeridas.', 'error');
+
+                    const pac = await apiFetch(`/pacientes/buscar-id?cedula=${cedulaPac}`);
+                    if (!pac.id_usuario || pac.nombre_rol !== 'Paciente') return showToast('Paciente no encontrado.', 'error');
+                    
+                    const doc = await apiFetch(`/pacientes/buscar-id?cedula=${cedulaDoc}`);
+                    if (!doc.id_usuario || doc.nombre_rol !== 'Doctor') return showToast('Doctor no encontrado.', 'error');
+
+                    fk_paciente_id = pac.id_usuario;
+                    fk_doctor_id = doc.id_usuario;
+                    motivo_ingreso = document.getElementById('cama-motivo').value;
+                }
+                
+                await updateCamaEstado(id_cama, nuevoEstado, fk_paciente_id, fk_doctor_id, motivo_ingreso);
+                closeModal();
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function updateCamaEstado(id_cama, nuevoEstado, fk_paciente_id = null, fk_doctor_id = null, motivo_ingreso = '') {
+             try {
+                await apiFetch(`/camas/${id_cama}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ 
+                        estado: nuevoEstado, 
+                        fk_paciente_actual: fk_paciente_id, 
+                        motivo_ingreso: motivo_ingreso,
+                        fk_doctor_acargo: fk_doctor_id 
+                    })
+                });
+                showToast(`Cama ${id_cama} actualizada a ${nuevoEstado}.`, 'success');
+                loadCensoCamas();
+            } catch (error) {
+                showToast(`Error al actualizar la cama: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+        
+        function toggleCamaForm(value) {
+            document.getElementById('cama-ocupar-detalle').style.display = (value === 'Ocupada') ? 'block' : 'none';
+        }
+        
+        // --- 8. ALERTAS EPIDEMIOLÓGICAS ---
+        async function loadAlertas() {
+            contentArea.innerHTML = `
+                <div id="alerta-form-area" class="form-container">
+                    <h2>Crear Nueva Alerta</h2>
+                    <form id="create-alerta-form">
+                        <input type="text" id="alerta-titulo" placeholder="Título de la Alerta" required>
+                        <textarea id="alerta-descripcion" placeholder="Descripción detallada o reporte" required style="height: 100px;"></textarea>
+                        <select id="alerta-gravedad" required>
+                            <option value="">Seleccione Nivel de Gravedad</option>
+                            <option value="Bajo">Bajo</option>
+                            <option value="Medio">Medio</option>
+                            <option value="Alto">Alto</option>
+                        </select>
+                        <button type="submit" class="btn-rojo" style="font-size: 1.1em;">Registrar Alerta</button>
+                    </form>
+                </div>
+                <div id="alertas-list-area">Cargando historial de alertas...</div>
+            `;
+            document.getElementById('create-alerta-form').addEventListener('submit', handleCreateAlerta);
+            fetchAlertasHistory();
+        }
+        
+        async function handleCreateAlerta(e) {
+            e.preventDefault();
+            const alertaData = {
+                titulo: document.getElementById('alerta-titulo').value,
+                descripcion: document.getElementById('alerta-descripcion').value,
+                nivel_gravedad: document.getElementById('alerta-gravedad').value
+            };
+            try {
+                await apiFetch(`/alertas/crear`, {
+                    method: 'POST',
+                    body: JSON.stringify(alertaData)
+                });
+                showToast('¡Alerta Epidemiológica registrada y notificada!', 'success');
+                document.getElementById('create-alerta-form').reset();
+                fetchAlertasHistory(); 
+            } catch (error) {
+                showToast(`Error al registrar alerta: ${error.message}`, 'error');
+            }
+        }
+        
+        async function fetchAlertasHistory() {
+            const listArea = document.getElementById('alertas-list-area');
+            const alertas = await apiFetch(`/alertas`);
+            let listHTML = `
+                <table>
+                    <thead><tr>
+                        <th>Fecha</th>
+                        <th>Título</th>
+                        <th>Reportado por</th>
+                        <th>Gravedad</th>
+                        <th>Acción</th> </tr></thead>
+                    <tbody>
+            `;
+            alertas.forEach(a => {
+                const date = new Date(a.fecha_creacion).toLocaleString();
+                listHTML += `
+                    <tr>
+                        <td data-label="Fecha">${date}</td>
+                        <td data-label="Título">${a.titulo}</td>
+                        <td data-label="Reportó">${a.reporta_nombre} ${a.reporta_apellido}</td>
+                        <td data-label="Gravedad"><span style="font-weight: bold; color: ${a.nivel_gravedad === 'Alto' ? 'var(--color-acento)' : a.nivel_gravedad === 'Medio' ? '#FFC107' : '#4CAF50'};">${a.nivel_gravedad}</span></td>
+                        <td data-label="Acción">
+                            <button class="btn-rojo btn-rojo-small" onclick="handleDeleteAlerta(${a.id_alerta})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            listHTML += `</tbody></table>`;
+            listArea.innerHTML = listHTML;
+        }
+
+        async function handleDeleteAlerta(id_alerta) {
+            openConfirmModal('Confirmar Eliminación', '¿Está seguro de eliminar esta alerta? Esta acción es irreversible.', async () => {
+                try {
+                    await apiFetch(`/alertas/${id_alerta}`, { method: 'DELETE' });
+                    showToast('Alerta eliminada.', 'success');
+                    fetchAlertasHistory();
+                } catch (error) {
+                    showToast(`Error: ${error.message}`, 'error');
+                }
+            });
+        }
+
+        // --- 9. CONFIGURACIÓN ---
+        async function loadConfiguracion() {
+            contentArea.innerHTML = `
+                <div class="form-container" style="max-width: 600px;">
+                    <h2>Cambiar Contraseña de Administrador</h2>
+                    <p>Por seguridad, al cambiar su contraseña, su sesión actual se cerrará.</p>
+                    <form id="config-admin-form">
+                        <label for="contrasena_actual">Contraseña Actual:</label>
+                        <input type="password" id="contrasena_actual" required>
+                        <label for="nueva_contrasena">Nueva Contraseña (Mín. 6 caracteres):</label>
+                        <input type="password" id="nueva_contrasena" required>
+                        <label for="confirmar_contrasena">Confirmar Nueva Contraseña:</label>
+                        <input type="password" id="confirmar_contrasena" required>
+                        <button type="submit" class="btn-rojo" style="font-size: 1.1em;">Cambiar Contraseña</button>
+                    </form>
+                </div>
+            `;
+            document.getElementById('config-admin-form').addEventListener('submit', handleUpdateAdminData);
+        }
+        
+        async function handleUpdateAdminData(e) {
+            e.preventDefault();
+            const actual = document.getElementById('contrasena_actual').value;
+            const nueva = document.getElementById('nueva_contrasena').value;
+            const confirmar = document.getElementById('confirmar_contrasena').value;
+
+            if (nueva !== confirmar) {
+                return showToast('Las nuevas contraseñas no coinciden.', 'error');
+            }
+            if (nueva.length < 6) {
+                return showToast('La nueva contraseña es muy corta.', 'error');
+            }
+
+            try {
+                const result = await apiFetch(`/actualizar-usuario`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        contrasena_actual: actual,
+                        nueva_contrasena: nueva
+                    })
+                });
+                
+                showToast(result.message, 'success');
+                if (result.requires_relogin) {
+                    setTimeout(logout, 2000);
+                }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Paciente - Hospital Dr. Adolfo D' Empaire</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        /* ==================================================================== */
+        /* CSS GLOBAL Y COLORES (Basado en Dark Blue y Red) */
+        /* ==================================================================== */
+        :root {
+            --color-principal: #0D47A1; /* Dark Blue */
+            --color-acento: #D32F2F;   /* Red */
+            --color-fondo: #F5F5F5;
+            --color-panel-bg: #FFFFFF;
+            --color-texto-claro: #FFFFFF; /* Blanco para el menú */
+            --color-sombra: 0 8px 16px rgba(0, 0, 0, 0.15); 
+            --color-secundario: #42A5F5; 
+        }
+        
+        /* Box-sizing universal para mejor control */
+        *, *:before, *:after {
+            box-sizing: border-box;
+        }
+        
+        body { 
+            background-color: var(--color-fondo); 
+            font-family: 'Arial', sans-serif; 
+            opacity: 0; 
+            transition: opacity 0.5s ease-in-out; 
+            display: flex; 
+            margin: 0; 
+            color: #333;
+        }
+        
+        .dashboard-container { 
+            display: flex; 
+            min-height: 100vh; 
+            width: 100%; 
+        }
+
+        /* ----------------------- SIDEBAR Y MENÚ (UNIFICADO) ----------------------- */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, var(--color-principal) 0%, #003366 100%); 
+            color: var(--color-texto-claro);
+            padding: 20px;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0; 
+            z-index: 100; /* Sidebar encima del overlay */
+        }
+        .sidebar h2 { 
+            margin-bottom: 30px; 
+            border-bottom: 3px solid var(--color-acento); 
+            padding-bottom: 15px; 
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            color: var(--color-texto-claro);
+            font-size: 1.5em; /* Ajuste ligero */
+        }
+        .menu-item {
+            display: flex; 
+            align-items: center;
+            padding: 15px 10px;
+            cursor: pointer;
+            border-radius: 8px; 
+            transition: background-color 0.3s, transform 0.2s;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: var(--color-texto-claro);
+        }
+        .sidebar a {
+            text-decoration: none;
+            color: var(--color-texto-claro);
+        }
+        
+        .menu-item i { margin-right: 15px; font-size: 1.2em; width: 20px; text-align: center; }
+        .menu-item:hover {
+            background-color: var(--color-secundario);
+            transform: translateY(-2px); 
+        }
+        .menu-item.active {
+            background-color: var(--color-acento);
+            box-shadow: var(--color-sombra);
+            transform: translateY(-2px);
+        }
+        .logout-menu-item {
+            margin-top: 50px; 
+            background-color: #8D021F !important; 
+            color: var(--color-texto-claro);
+        }
+        .logout-menu-item:hover {
+            background-color: var(--color-acento) !important;
+            transform: translateY(-2px);
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+            display: none; 
+        }
+
+        /* ----------------------- ESTILOS DE NOTIFICACIONES ----------------------- */
+        .notification-badge {
+            background-color: #FFC107; 
+            color: #333;
+            border-radius: 50%;
+            padding: 3px 7px;
+            font-size: 0.8em;
+            margin-left: auto;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            animation: pulse 1s infinite alternate;
+        }
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+        .notification-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background-color: #FFF3F3; 
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--color-acento); 
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        .notification-item:hover { background-color: #FFEEF0; }
+        .notification-icon {
+            font-size: 1.5em;
+            margin-right: 15px;
+            color: var(--color-acento);
+        }
+        .notification-content p { margin: 0; line-height: 1.4; }
+        .notification-date { font-size: 0.8em; color: #999; margin-top: 5px; }
+        
+        /* ----------------------- CONTENIDO PRINCIPAL ----------------------- */
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            background-color: var(--color-fondo);
+        }
+        .panel-header {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+        }
+        .menu-toggle {
+            display: none; 
+            font-size: 1.8em;
+            cursor: pointer;
+            color: var(--color-principal);
+        }
+
+        .content-section {
+            display: none; 
+            background-color: var(--color-panel-bg);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: var(--color-sombra); 
+            /* Animación de entrada */
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .content-section.active { display: block; }
+        
+        .profile-card {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        .data-group {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
+        }
+        .data-group h4 { 
+            color: var(--color-principal); 
+            margin-bottom: 15px; 
+            border-bottom: 1px dashed #ccc; 
+            padding-bottom: 5px;
+        }
+        .data-group strong {
+            color: #555;
+            display: inline-block;
+            min-width: 120px;
+        }
+        
+        /* Estilos de Formularios (Unificados) */
+        textarea, select, input[type="text"], input[type="date"], input[type="email"], input[type="password"], input[type="time"], input[type="file"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            min-height: 40px; 
+        }
+        textarea:focus, select:focus, input:focus {
+            outline: none;
+            border-color: var(--color-principal);
+            box-shadow: 0 0 5px rgba(13, 71, 161, 0.3);
+        }
+        textarea { min-height: 100px; resize: vertical; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        
+        /* Botones de Formularios */
+        .antecedentes-form button, .profile-form button, .familiar-form button, .cita-form button, .medicamento-form button {
+            background-color: var(--color-acento); /* Rojo por defecto */
+            color: var(--color-texto-claro);
+            border: none;
+            padding: 15px 30px; 
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+            font-weight: bold;
+            font-size: 1.1em; 
+            box-shadow: 0 4px 8px rgba(211, 47, 47, 0.4); 
+            border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+            transform: translateY(0);
+        }
+        .antecedentes-form button:hover, .profile-form button:hover, .familiar-form button:hover, .medicamento-form button:hover, .cita-form button:hover {
+            background-color: #A00000; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(211, 47, 47, 0.5);
+        }
+        /* Botón específico de Citas (Azul) */
+        .cita-form button { 
+            background-color: var(--color-principal) !important; 
+            box-shadow: 0 4px 8px rgba(13, 71, 161, 0.4); 
+        }
+        .cita-form button:hover {
+            background-color: #003366 !important;
+            box-shadow: 0 6px 12px rgba(13, 71, 161, 0.5);
+        }
+        
+        /* ----------------------- ESTILOS DE TABLAS (Unificados) ----------------------- */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; word-break: break-word; }
+        th { background-color: var(--color-principal); color: white; font-weight: bold; }
+        tr:hover { background-color: #f9f9f9; }
+        .empty-table { text-align: center !important; padding: 30px !important; color: #777; font-style: italic; }
+        
+        /* ESTADOS (Badges) */
+        .status-badge { padding: 5px 10px; border-radius: 15px; color: white; font-size: 0.9em; font-weight: bold; }
+        .status-completada { background-color: #28A745; } /* Verde */
+        .status-aceptada { background-color: #007BFF; } /* Azul */
+        .status-pendiente { background-color: #FFC107; color: #333; } /* Amarillo/Naranja */
+        .status-rechazada { background-color: #DC3545; } /* Rojo */
+        .status-procesada { background-color: #007BFF; } 
+        .status-entregada { background-color: #28A745; }
+
+        /* Estilo para Info de Horario */
+        #horario-info {
+            background: #e3f2fd;
+            border: 1px solid var(--color-secundario);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        #horario-info h5 {
+            margin: 0 0 10px 0;
+            color: var(--color-principal);
+            border-bottom: 1px solid #bde0fe;
+            padding-bottom: 5px;
+        }
+        #horario-info ul { margin: 0; padding-left: 20px; list-style-type: '✓'; }
+        #horario-info li { padding-left: 8px; }
+        
+        /* ----------------------- NOTIFICACIÓN TOAST PROFESIONAL ----------------------- */
+        #toast-notification {
+            position: fixed;
+            top: -100px; /* Inicia fuera de la pantalla */
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            padding: 14px 22px;
+            border-radius: 50px; /* Forma de píldora */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 2000;
+            transition: top 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            font-weight: bold;
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+        }
+        #toast-notification.show {
+            top: 20px; /* Baja a la posición visible */
+            opacity: 1;
+        }
+        #toast-notification.success { background-color: #28A745; }
+        #toast-notification.error { background-color: var(--color-acento); }
+        #toast-notification i {
+            margin-right: 12px;
+            font-size: 1.3em;
+        }
+
+        /* ----------------------- RESPONSIVIDAD (Móvil) ----------------------- */
+        @media (max-width: 900px) {
+            .sidebar {
+                position: fixed;
+                left: -250px; 
+                height: 100%;
+                transition: left 0.3s ease-in-out;
+                z-index: 100;
+            }
+            .sidebar.open {
+                left: 0; 
+            }
+            .menu-toggle {
+                display: block; 
+            }
+            .main-content {
+                width: 100%;
+                padding: 20px;
+                padding-top: 80px; /* Espacio para header fijo */
+            }
+            .panel-header { /* Header Fijo */
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0; /* Asegura que ocupe todo el ancho */
+                background-color: var(--color-panel-bg);
+                padding: 15px 20px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                z-index: 90;
+                margin-bottom: 0;
+                border-bottom: none;
+            }
+            .panel-header h1 { font-size: 1.3em; }
+            .profile-card { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; } /* Forzar 1 columna en móvil */
+            
+            /* --- INICIO: CSS DE TABLA RESPONSIVA (PERFECTA) --- */
+            table, thead, tbody, th, td, tr { 
+                display: block; 
+            }
+            thead tr { 
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            tr { 
+                border: 1px solid #ccc; 
+                margin-bottom: 10px; 
+                border-radius: 8px;
+                background: #fff;
+            }
+            tr:nth-child(even) { background-color: #fff; } /* Resetear cebra */
+            tr:hover { background-color: #f9f9f9; }
+            
+            td { 
+                border: none;
+                border-bottom: 1px solid #eee; 
+                position: relative;
+                padding-left: 50% !important; /* Forzar padding */
+                text-align: right;
+                min-height: 40px; /* Altura mínima */
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+            }
+            td:last-child { border-bottom: none; }
+            
+            td:before { 
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                left: 12px;
+                width: 45%; 
+                padding-right: 10px; 
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                color: var(--color-principal);
+                content: attr(data-label); /* ¡LA CLAVE! */
+            }
+            /* --- FIN: CSS DE TABLA RESPONSIVA --- */
+        }
+    </style>
+</head>
+<body style="opacity: 0;"> 
+    <script>
+        // ====================================================================
+        // 1. CONFIGURACIÓN Y AUTENTICACIÓN
+        // ====================================================================
+        
+        const API_BASE = '/api/paciente';
+        const NOTIFICATION_POLL_INTERVAL = 15000;
+
+        /**
+         * Muestra una notificación toast profesional.
+         * @param {string} message - El mensaje a mostrar.
+         * @param {string} type - 'success' (verde) o 'error' (rojo).
+         */
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast-notification');
+            if (!toast) {
+                console.warn('Elemento toast-notification no encontrado. Usando alert() como fallback.');
+                alert(message); // Fallback si el HTML no está
+                return;
+            }
+            
+            let icon = '';
+            // Limpiar clases anteriores
+            toast.className = ''; 
+            
+            if (type === 'success') {
+                icon = '<i class="fas fa-check-circle"></i>';
+                toast.classList.add('success');
+            } else { // 'error'
+                icon = '<i class="fas fa-exclamation-triangle"></i>';
+                toast.classList.add('error');
+            }
+            
+            toast.innerHTML = `${icon} ${message}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.className = toast.className.replace('show', '');
+            }, 3000); // Ocultar después de 3 segundos
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+        
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('open');
+            overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+        }
+
+        async function apiFetch(endpoint, method = 'GET', data = null) {
+            const token = localStorage.getItem('token');
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            };
+            const config = { method: method, headers: headers };
+            if (data && method !== 'GET') {
+                config.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, config);
+                
+                if (response.status === 401 || response.status === 403) {
+                    showToast('❌ Sesión expirada. Por favor, inicie sesión de nuevo.', 'error');
+                    setTimeout(logout, 1500); 
+                    throw new Error('Token Inválido/Expirado'); 
+                }
+
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const result = await response.json();
+                    if (!response.ok) {
+                        const errorMsg = result.msg || `Error ${response.status}: Error desconocido del servidor.`;
+                        throw new Error(errorMsg);
+                    }
+                    return result;
+                } else {
+                     if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error("API Fetch Falló (No JSON):", errorText);
+                        throw new Error(`Error ${response.status}: El servidor respondió con un formato inesperado.`);
+                    }
+                    return {};
+                }
+            } catch (error) {
+                console.error(`API Fetch Falló (${endpoint}):`, error);
+                if (error.message.includes('fetch')) {
+                     throw new Error('No se pudo conectar al servidor. Revise el backend (Node.js/PgAdmin4).');
+                }
+                throw new Error(error.message);
+            }
+        }
+        
+        function showContent(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            const target = document.getElementById(sectionId);
+            if (target) target.classList.add('active'); 
+            
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const menuItem = document.getElementById(`menu-${sectionId}`);
+            if (menuItem) menuItem.classList.add('active');
+            
+            history.pushState(null, null, `paciente.html#${sectionId}`);
+            
+            if (target && target.classList.contains('active')) {
+                if (sectionId === 'notificaciones') loadNotifications();
+                if (sectionId === 'configuracion') loadProfileData();
+                if (sectionId === 'citas') loadCitasHistorial();
+                if (sectionId === 'medicamentos') loadSolicitudesMedicamentos();
+                if (sectionId === 'familiares') loadFamiliares();
+            }
+
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('open') && window.innerWidth <= 900) {
+                toggleMenu();
+            }
+        }
+        
+        // ====================================================================
+        // 2. LÓGICA DE NOTIFICACIONES
+        // ====================================================================
+        
+        async function checkNotifications() {
+            try {
+                const result = await apiFetch('/notificaciones/count', 'GET'); 
+                const count = result.count;
+                const badge = document.getElementById('notification-count-badge');
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                    document.title = `(${count}) Panel Paciente`; 
+                } else {
+                    badge.style.display = 'none';
+                    document.title = `Panel de Paciente`;
+                }
+            } catch (error) { console.warn('Fallo el chequeo de notificaciones:', error.message); }
+        }
+
+        async function loadNotifications() {
+            try {
+                // Esta ruta AHORA FUNCIONARÁ, asumiendo que arreglaste server.js
+                const notifications = await apiFetch('/notificaciones/list', 'GET'); 
+                const container = document.getElementById('notifications-list-container');
+                container.innerHTML = '';
+                if (notifications.length === 0) {
+                    container.innerHTML = '<p class="empty-table">No tienes notificaciones recientes.</p>';
+                    return;
+                }
+                
+                notifications.forEach(notif => {
+                    const date = new Date(notif.fecha_relevante).toLocaleString('es-VE');
+                    let icon = '';
+                    let title = notif.titulo;
+                    let targetSection = 'inicio'; 
+                    let color = 'var(--color-acento)'; 
+                    
+                    if (notif.origen === 'medicamento') {
+                        icon = (notif.tipo_estado === 'Procesada' || notif.tipo_estado === 'Entregada') ? 'fas fa-check-circle' : 'fas fa-times-circle';
+                        color = (notif.tipo_estado === 'Procesada' || notif.tipo_estado === 'Entregada') ? '#28A745' : color;
+                        targetSection = 'medicamentos'; 
+                    } else if (notif.origen === 'cita') {
+                        icon = (notif.tipo_estado === 'Aceptada') ? 'fas fa-calendar-alt' : 'fas fa-times-circle';
+                        color = (notif.tipo_estado === 'Aceptada') ? 'var(--color-principal)' : color;
+                        targetSection = 'citas'; 
+                    } else if (notif.origen === 'alerta_global') { // Lógica para Alerta
+                        icon = 'fas fa-biohazard'; 
+                        title = notif.titulo; 
+                        color = '#E65100'; // Naranja
+                        targetSection = 'notificaciones'; 
+                    }
+                    
+                    container.innerHTML += `
+                        <div class="notification-item" onclick="showContent('${targetSection}')" style="border-left-color: ${color};">
+                            <i class="${icon} notification-icon" style="color: ${color}"></i>
+                            <div class="notification-content">
+                                <p><strong>${title}</strong></p>
+                                <p>${notif.cuerpo}</p>
+                                <div class="notification-date">${date}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error al cargar notificaciones:", error);
+                document.getElementById('notifications-list-container').innerHTML = `<p style="color:red;">❌ Error al cargar notificaciones: ${error.message}</p>`;
+            }
+        }
+        
+        // ====================================================================
+        // 3. LÓGICA DE PERFIL Y ANTECEDENTES
+        // ====================================================================
+        
+        async function loadProfileData() {
+            try {
+                const data = await apiFetch('/datos');
+                document.getElementById('profile-name').textContent = `${data.nombre || 'N/A'} ${data.apellido || 'N/A'}`;
+                document.getElementById('profile-cedula').textContent = data.cedula || 'N/A';
+                document.getElementById('profile-email').textContent = data.email || 'N/A';
+                document.getElementById('profile-telefono').textContent = data.telefono || 'N/A';
+                document.getElementById('profile-address').textContent = data.direccion_base || 'N/A'; 
+                document.getElementById('profile-detallada-view').textContent = data.direccion_detallada || 'No especificada.';
+                document.getElementById('profile-socio').textContent = data.datos_socioeconomicos || 'No especificado.';
+                document.getElementById('profile-estudio').textContent = data.datos_estudio || 'No especificado.';
+                document.getElementById('profile-emergencia-nombre').textContent = data.contacto_emergencia_nombre || 'N/A';
+                document.getElementById('profile-emergencia-telefono').textContent = data.contacto_emergencia_telefono || 'N/A';
+                document.getElementById('datos_socioeconomicos').value = data.datos_socioeconomicos || '';
+                document.getElementById('datos_estudio').value = data.datos_estudio || '';
+                document.getElementById('direccion_detallada').value = data.direccion_detallada || ''; 
+                document.getElementById('contacto_emergencia_nombre').value = data.contacto_emergencia_nombre || '';
+                document.getElementById('contacto_emergencia_telefono').value = data.contacto_emergencia_telefono || '';
+                
+                const configForm = document.getElementById('config-form');
+                if (configForm) {
+                    configForm.querySelector('#new_email').value = data.email || '';
+                    configForm.querySelector('#new_telefono').value = data.telefono || '';
+                }
+                document.getElementById('user-display-name').textContent = data.nombre || 'Paciente';
+            } catch (error) { console.error("Error al cargar datos del perfil:", error); }
+        }
+        
+        async function loadAntecedentes() {
+             try {
+                const data = await apiFetch('/antecedentes');
+                document.getElementById('habito_alcohol').value = data.habito_alcohol === true ? 'si' : 'no';
+                document.getElementById('habito_tabaco').value = data.habito_tabaco === true ? 'si' : 'no';
+                document.getElementById('alergias').value = data.alergias || '';
+                document.getElementById('antecedentes_familiares').value = data.antecedentes_familiares || '';
+                document.getElementById('cirugia_previa').value = data.cirugia_previa || '';
+                document.getElementById('medicamentos_actuales').value = data.medicamentos_actuales || '';
+                document.getElementById('condicion_cronica').value = data.condicion_cronica || '';
+            } catch (error) { console.error("Error al cargar antecedentes:", error); }
+        }
+
+        async function saveProfileData(event) {
+            event.preventDefault();
+            const data = {
+                datos_socioeconomicos: event.target.datos_socioeconomicos.value,
+                datos_estudio: event.target.datos_estudio.value,
+                direccion_detallada: event.target.direccion_detallada.value, 
+                contacto_emergencia_nombre: event.target.contacto_emergencia_nombre.value,
+                contacto_emergencia_telefono: event.target.contacto_emergencia_telefono.value
+            };
+            try {
+                const result = await apiFetch('/datos', 'PUT', data);
+                showToast('✅ ' + result.msg, 'success'); 
+                loadProfileData(); 
+            } catch (error) { showToast('❌ Error al actualizar datos: ' + error.message, 'error'); } 
+        }
+
+        async function saveAntecedentes(event) {
+            event.preventDefault();
+            const data = {
+                habito_alcohol: event.target.habito_alcohol.value,
+                habito_tabaco: event.target.habito_tabaco.value,
+                alergias: event.target.alergias.value,
+                antecedentes_familiares: event.target.antecedentes_familiares.value,
+                cirugia_previa: event.target.cirugia_previa.value,
+                medicamentos_actuales: event.target.medicamentos_actuales.value,
+                condicion_cronica: event.target.condicion_cronica.value
+            };
+            try {
+                const result = await apiFetch('/antecedentes', 'PUT', data);
+                showToast('✅ ' + result.msg, 'success'); 
+                loadAntecedentes(); 
+            } catch (error) { showToast('❌ Error al actualizar historial: ' + error.message, 'error'); } 
+        }
+        
+        // ====================================================================
+        // 4. LÓGICA DE CONFIGURACIÓN
+        // ====================================================================
+        
+        async function updateUserData(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = {
+                email: form.new_email.value.trim() || undefined,
+                telefono: form.new_telefono.value.trim() || undefined,
+                contrasena_actual: form.contrasena_actual.value,
+                nueva_contrasena: form.nueva_contrasena.value.trim() || undefined
+            };
+            
+            if (!data.contrasena_actual) return showToast('❌ Debe ingresar su Contraseña Actual.', 'error');
+            if (!data.email && !data.telefono && !data.nueva_contrasena) return showToast('⚠️ Ingrese un dato para actualizar.', 'error');
+
+            try {
+                const result = await apiFetch('/actualizar-usuario', 'PUT', data);
+                showToast(result.msg, 'success'); 
+                if (result.requires_relogin) {
+                    setTimeout(logout, 1500); // Dar tiempo al toast
+                } else {
+                    form.contrasena_actual.value = '';
+                    form.nueva_contrasena.value = '';
+                    loadProfileData(); 
+                }
+            } catch (error) { showToast('❌ Error al actualizar: ' + error.message, 'error'); } 
+        }
+        
+        // ====================================================================
+        // 5. LÓGICA DE CITAS
+        // ====================================================================
+        
+        async function loadEspecialidades() {
+            try {
+                const response = await fetch('/api/public/especialidades');
+                if (!response.ok) throw new Error('Error al cargar especialidades');
+                const especialidades = await response.json();
+                const select = document.getElementById('agendar-especialidad');
+                select.innerHTML = '<option value="">Seleccione Especialidad</option>';
+                especialidades.forEach(nombre => {
+                    select.innerHTML += `<option value="${nombre}">${nombre}</option>`;
+                });
+            } catch (error) {
+                 console.error("Error al cargar especialidades:", error);
+                 document.getElementById('agendar-especialidad').innerHTML = '<option value="">Error al cargar.</option>';
+            }
+        }
+
+        async function loadDoctores(especialidad) {
+            const select = document.getElementById('agendar-doctor');
+            select.innerHTML = '<option value="">Seleccione Doctor</option>';
+            document.getElementById('horario-info').style.display = 'none';
+            if (!especialidad) return;
+            try {
+                const encodedEspecialidad = encodeURIComponent(especialidad);
+                const response = await fetch(`/api/public/doctores/${encodedEspecialidad}`);
+                if (!response.ok) throw new Error('Error al cargar doctores');
+                const doctores = await response.json();
+                if (doctores.length === 0) {
+                    select.innerHTML = '<option value="">No hay doctores activos</option>';
+                    return;
+                }
+                doctores.forEach(item => {
+                    select.innerHTML += `<option value="${item.id_doctor}">${item.nombre} ${item.apellido}</option>`;
+                });
+            } catch (error) {
+                console.error("Error al cargar doctores:", error);
+                select.innerHTML = '<option value="">Error al cargar doctores.</option>';
+            }
+        }
+        
+        async function loadHorarioDoctor(id_doctor) {
+            const horarioInfo = document.getElementById('horario-info');
+            if (!id_doctor) {
+                horarioInfo.style.display = 'none';
+                return;
+            }
+            horarioInfo.style.display = 'block';
+            horarioInfo.innerHTML = '<h5><i class="fas fa-spinner fa-spin"></i> Cargando horario...</h5>';
+            try {
+                const response = await fetch(`/api/public/doctor/${id_doctor}/horario`);
+                if (!response.ok) throw new Error('No se pudo cargar el horario.');
+                const horarios = await response.json();
+                if (horarios.length === 0) {
+                    horarioInfo.innerHTML = '<h5>Horario del Doctor</h5><p>Este doctor no ha registrado su horario de atención. Contacte al hospital.</p>';
+                    return;
+                }
+                let html = '<h5>Horario de Atención General</h5><ul>';
+                horarios.forEach(dia => {
+                    html += `<li><strong>${dia.dia_semana}:</strong> ${dia.hora_inicio} - ${dia.hora_fin}</li>`;
+                });
+                html += '</ul><p style="font-size: 0.9em; margin-top: 10px;">Por favor, seleccione una fecha y hora <strong>dentro</strong> de este rango general.</p>';
+                horarioInfo.innerHTML = html;
+            } catch (error) {
+                console.error("Error al cargar horario:", error);
+                horarioInfo.innerHTML = `<h5 style="color:var(--color-acento)">Error</h5><p>${error.message}</p>`;
+            }
+        }
+
+        async function agendarCita(event) {
+            event.preventDefault();
+            const form = event.target;
+            const fechaHora = form['agendar-fecha'].value && form['agendar-hora'].value 
+                              ? `${form['agendar-fecha'].value}T${form['agendar-hora'].value}:00` 
+                              : null; 
+            const data = {
+                id_doctor: form['agendar-doctor'].value,
+                fecha_hora: fechaHora,
+                motivo_consulta: form['agendar-motivo'].value
+            };
+
+            if (!data.id_doctor || !data.fecha_hora || !data.motivo_consulta) {
+                showToast("Por favor, complete todos los campos de la cita.", 'error');
+                return;
+            }
+            try {
+                const result = await apiFetch('/citas/agendar', 'POST', data); 
+                showToast('✅ Cita solicitada: ' + result.msg, 'success'); 
+                form.reset();
+                document.getElementById('horario-info').style.display = 'none';
+                loadCitasHistorial(); 
+            } catch (error) { showToast('❌ Error al agendar cita: ' + error.message, 'error'); } 
+        }
+        
+        async function loadCitasHistorial() {
+            try {
+                const citas = await apiFetch('/citas/historial'); 
+                const container = document.getElementById('historial-citas-body');
+                container.innerHTML = ''; 
+                if (citas.length === 0) {
+                    container.innerHTML = '<tr><td colspan="4" data-label="Estado" class="empty-table">No hay citas registradas en tu historial.</td></tr>';
+                    return;
+                }
+                citas.forEach(cita => {
+                    let estadoClass = '';
+                    if (cita.estado_cita === 'Completada') estadoClass = 'status-completada';
+                    else if (cita.estado_cita === 'Aceptada') estadoClass = 'status-aceptada';
+                    else if (cita.estado_cita === 'Pendiente') estadoClass = 'status-pendiente';
+                    else if (cita.estado_cita === 'Rechazada') estadoClass = 'status-rechazada';
+                    const fecha = new Date(cita.fecha_hora_consulta).toLocaleString('es-VE');
+                    
+                    // ¡MODIFICADO! Añadidos data-label
+                    container.innerHTML += `
+                        <tr>
+                            <td data-label="Fecha y Hora">${fecha}</td>
+                            <td data-label="Doctor">${cita.doctor_nombre || 'N/A'} ${cita.doctor_apellido || ''} (${cita.especialidad || 'N/A'})</td>
+                            <td data-label="Motivo">${cita.motivo_consulta}</td>
+                            <td data-label="Estado"><span class="status-badge ${estadoClass}">${cita.estado_cita}</span></td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error al cargar historial de citas:", error);
+                document.getElementById('historial-citas-body').innerHTML = `<tr><td colspan="4" data-label="Estado" class="empty-table error">❌ Error al cargar citas. ${error.message}</td></tr>`;
+            }
+        }
+        
+        // ====================================================================
+        // 6. LÓGICA DE MEDICAMENTOS
+        // ====================================================================
+        
+        async function solicitarMedicamento(event) {
+            event.preventDefault();
+            const form = event.target;
+            const fileInput = form.querySelector('input[type="file"]');
+            
+            if (fileInput.files.length === 0) return showToast("Debe adjuntar la receta médica.", 'error');
+            if (!form['nombre_medicamento'].value) return showToast("Complete los detalles del medicamento.", 'error');
+            
+            const descripcionCompleta = `
+                Medicamento: ${form['nombre_medicamento'].value.toUpperCase()}
+                Dosis/Concentración: ${form['dosis_mg'].value}
+                Cantidad: ${form['cantidad'].value}
+                Doctor Solicitante: ${form['doctor_solicitante'].value}
+                Notas Adicionales: ${form['notas_adicionales'].value || 'Ninguna'}
+            `.trim();
+            
+            const formData = new FormData(); 
+            formData.append('receta_adjunta', fileInput.files[0]);
+            formData.append('nota_solicitud', descripcionCompleta); 
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/medicamentos/solicitar`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                
+                if (response.status === 401 || response.status === 403) { showToast(`❌ Sesión expirada.`, 'error'); logout(); return; }
+                const result = await response.json();
+                if (!response.ok) { throw new Error(result.msg || `Error del servidor.`); }
+                
+                showToast('✅ Solicitud de medicamento enviada correctamente.', 'success');
+                form.reset(); 
+                loadSolicitudesMedicamentos(); 
+            } catch (error) { showToast('❌ Error al solicitar medicamento: ' + error.message, 'error'); } 
+        }
+
+        async function loadSolicitudesMedicamentos() {
+            try {
+                const solicitudes = await apiFetch('/medicamentos/solicitud'); 
+                const container = document.getElementById('historial-medicamentos-body');
+                container.innerHTML = '';
+                if (solicitudes.length === 0) {
+                    container.innerHTML = '<tr><td colspan="6" data-label="Estado" class="empty-table">No has realizado solicitudes de medicamentos.</td></tr>';
+                    return;
+                }
+                solicitudes.forEach(sol => {
+                    const fecha = new Date(sol.fecha_solicitud).toLocaleDateString('es-VE');
+                    let estadoClass = '';
+                    if (sol.estado === 'Entregada') estadoClass = 'status-entregada';
+                    else if (sol.estado === 'Procesada') estadoClass = 'status-procesada';
+                    else if (sol.estado === 'Pendiente') estadoClass = 'status-pendiente';
+                    else if (sol.estado === 'Rechazada') estadoClass = 'status-rechazada';
+                    const downloadLink = sol.receta_adjunta 
+                        ? `<a href="/uploads/recetas/${sol.receta_adjunta}" target="_blank" style="color: var(--color-acento); font-weight: bold;"><i class="fas fa-download"></i> Ver Receta</a>` 
+                        : 'N/A';
+                    const atendidoPor = sol.procesa_nombre 
+                        ? `${sol.procesa_nombre} ${sol.procesa_apellido}` 
+                        : '<span style="color:#FFC107;">Pendiente</span>';
+
+                    // ¡MODIFICADO! Añadidos data-label
+                    container.innerHTML += `
+                        <tr>
+                            <td data-label="ID">${sol.id_solicitud}</td>
+                            <td data-label="Fecha Sol.">${fecha}</td>
+                            <td data-label="Medicamento/Detalle"><pre style="margin:0; white-space: pre-wrap; font-family: inherit; font-size: 0.95em;">${sol.descripcion_solicitud || 'N/A'}</pre></td> 
+                            <td data-label="Atendido Por">${atendidoPor}</td>
+                            <td data-label="Estado"><span class="status-badge ${estadoClass}">${sol.estado}</span></td>
+                            <td data-label="Receta">${downloadLink}</td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error al cargar solicitudes de medicamentos:", error);
+                document.getElementById('historial-medicamentos-body').innerHTML = `<tr><td colspan="6" data-label="Estado" class="empty-table error">❌ Error al cargar historial. ${error.message}</td></tr>`;
+            }
+        }
+        
+        // ====================================================================
+        // 7. LÓGICA DE FAMILIARES
+        // ====================================================================
+        
+        async function loadFamiliares() {
+            try {
+                const familiares = await apiFetch('/familiares');
+                const container = document.getElementById('familiares-list-body');
+                container.innerHTML = '';
+                if (familiares.length === 0) {
+                    container.innerHTML = '<tr><td colspan="4" data-label="Relación" class="empty-table">No tienes familiares/menores registrados.</td></tr>';
+                    return;
+                }
+                familiares.forEach(f => {
+                    const fechaNacimiento = new Date(f.fecha_nacimiento).toLocaleDateString('es-VE');
+                    
+                    // ¡MODIFICADO! Añadidos data-label
+                    container.innerHTML += `
+                        <tr>
+                            <td data-label="Nombre Completo">${f.nombre} ${f.apellido}</td>
+                            <td data-label="Cédula">${f.cedula}</td>
+                            <td data-label="Relación">${f.relacion}</td>
+                            <td data-label="Fecha Nacimiento">${fechaNacimiento}</td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error al cargar familiares:", error);
+                document.getElementById('familiares-list-body').innerHTML = `<tr><td colspan="4" data-label="Relación" class="empty-table error">❌ Error al cargar datos. ${error.message}</td></tr>`;
+            }
+        }
+
+        async function saveFamiliar(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = {
+                nombre: form.nombre.value,
+                apellido: form.apellido.value,
+                cedula: form.cedula.value,
+                parentesco: form.relacion.value,
+                fecha_nacimiento: form.fecha_nacimiento.value
+            };
+            try {
+                const result = await apiFetch('/familiares', 'POST', data); 
+                showToast('✅ ' + result.msg, 'success'); 
+                form.reset(); 
+                loadFamiliares(); 
+            } catch (error) { showToast('❌ Error al agregar familiar: ' + error.message, 'error'); } 
+        }
+        
+        // ====================================================================
+        // 8. INICIALIZACIÓN
+        // ====================================================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const userRole = localStorage.getItem('rol');
+
+            if (!token || userRole !== 'Paciente') {
+                showToast('❌ Sesión no encontrada o rol incorrecto. Redirigiendo...', 'error');
+                setTimeout(logout, 1500);
+            } else {
+                document.body.style.opacity = 1; 
+                const urlHash = window.location.hash.substring(1) || 'inicio'; 
+                showContent(urlHash); 
+                
+                loadProfileData(); 
+                loadAntecedentes(); 
+                loadEspecialidades();
+                
+                checkNotifications(); 
+                setInterval(checkNotifications, NOTIFICATION_POLL_INTERVAL);
+            }
+        });
+    </script>
+
+    <div class="dashboard-container">
+        <div class="sidebar" id="sidebar">
+            <h2><i class="fas fa-hospital-user"></i> Panel Paciente</h2>
+            
+            <div id="menu-inicio" class="menu-item" onclick="showContent('inicio')"><i class="fas fa-home"></i> Inicio</div>
+            <div id="menu-perfil" class="menu-item" onclick="showContent('perfil')"><i class="fas fa-user-circle"></i> Mi Perfil</div>
+            <div id="menu-antecedentes" class="menu-item" onclick="showContent('antecedentes')"><i class="fas fa-file-medical"></i> Historial Médico</div>
+            
+            <hr style="border-color: rgba(255,255,255,0.2); margin: 15px 0;">
+
+            <div id="menu-notificaciones" class="menu-item" onclick="showContent('notificaciones')">
+                <i class="fas fa-bell"></i> Notificaciones
+                <span class="notification-badge" id="notification-count-badge" style="display:none;">0</span>
+            </div>
+            
+            <div id="menu-citas" class="menu-item" onclick="showContent('citas')"><i class="fas fa-calendar-check"></i> Citas</div>
+            <div id="menu-medicamentos" class="menu-item" onclick="showContent('medicamentos')"><i class="fas fa-prescription-bottle-alt"></i> Medicamentos</div>
+            <div id="menu-familiares" class="menu-item" onclick="showContent('familiares')"><i class="fas fa-users"></i> Familiares/Menores</div>
+            
+            <hr style="border-color: rgba(255,255,255,0.2); margin: 15px 0;">
+            
+            <div id="menu-configuracion" class="menu-item" onclick="showContent('configuracion')"><i class="fas fa-cog"></i> Configuración</div>
+            
+            <div class="menu-item logout-menu-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</div>
+        </div>
+
+        <div class="main-content">
+            <div class="panel-header">
+                <i class="fas fa-bars menu-toggle" onclick="toggleMenu()"></i>
+                <h1>Bienvenido(a), <span id="user-display-name">...</span></h1>
+            </div>
+
+            <div id="inicio" class="content-section active">
+                <h2>👋 Mensaje de Bienvenida</h2>
+                <p>Estimado paciente, le damos la bienvenida a su portal personal. Aquí podrá gestionar sus datos de perfil, historial médico y citas. Mantenga su información siempre actualizada.</p>
+                <div style="margin-top: 30px;">
+                    <h3><i class="fas fa-bell"></i> Resumen de Servicios</h3>
+                    <div id="notifications-summary" style="padding: 25px; border: 1px dashed #ddd; border-radius: 8px;">
+                        <p><strong>Estado del Sistema:</strong> El sistema de **Notificaciones** está activo. Verifique el ícono de campana (<i class="fas fa-bell" style="color: var(--color-acento);"></i>) para ver nuevos eventos.</p>
+                        <p>Utilice el menú lateral para navegar entre sus datos y la gestión de servicios.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="perfil" class="content-section">
+                <h2><i class="fas fa-user-circle"></i> Mi Perfil y Datos Adicionales</h2>
+                <div class="profile-card">
+                    <div class="data-group">
+                        <h4>Datos Básicos y Contacto</h4>
+                        <p><strong><i class="fas fa-user"></i> Nombre:</strong> <span id="profile-name">Cargando...</span></p>
+                        <p><strong><i class="fas fa-id-card"></i> Cédula:</strong> <span id="profile-cedula">Cargando...</span></p>
+                        <p><strong><i class="fas fa-envelope"></i> Correo:</strong> <span id="profile-email">Cargando...</span></p>
+                        <p><strong><i class="fas fa-phone"></i> Teléfono:</strong> <span id="profile-telefono">Cargando...</span></p>
+                        <p><strong><i class="fas fa-map-marker-alt"></i> Dir. Base:</strong> <span id="profile-address">Cargando...</span></p>
+                    </div>
+                    <div class="data-group">
+                        <h4>Información Complementaria (Vista)</h4>
+                        <p><strong><i class="fas fa-map-marked-alt"></i> Dir. Detallada:</strong> <span id="profile-detallada-view">Cargando...</span></p> 
+                        <p><strong><i class="fas fa-graduation-cap"></i> Estudios:</strong> <span id="profile-estudio">Cargando...</span></p>
+                        <p><strong><i class="fas fa-hand-holding-usd"></i> Socioeconómicos:</strong> <span id="profile-socio">Cargando...</span></p>
+                    </div>
+                    <div class="data-group">
+                        <h4><i class="fas fa-ambulance"></i> Contacto de Emergencia</h4>
+                        <p><strong>Nombre:</strong> <span id="profile-emergencia-nombre">Cargando...</span></p>
+                        <p><strong>Teléfono:</strong> <span id="profile-emergencia-telefono">Cargando...</span></p>
+                    </div>
+                </div>
+
+                <h3><i class="fas fa-edit"></i> Actualizar Datos Adicionales y Contacto de Emergencia</h3>
+                <form onsubmit="saveProfileData(event)" class="profile-form">
+                    <div style="border: 1px solid #D32F2F; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                        <h4 style="color: var(--color-acento); margin-top: 0;"><i class="fas fa-ambulance"></i> Contacto de Emergencia</h4>
+                        <div class="form-grid">
+                            <div>
+                                <label for="contacto_emergencia_nombre">Nombre Contacto:</label>
+                                <input type="text" id="contacto_emergencia_nombre" name="contacto_emergencia_nombre">
+                            </div>
+                            <div>
+                                <label for="contacto_emergencia_telefono">Teléfono Contacto:</label>
+                                <input type="text" id="contacto_emergencia_telefono">
+                            </div>
+                        </div>
+                    </div>
+                    <label for="direccion_detallada">Dirección Detallada (Texto Simple):</label>
+                    <textarea id="direccion_detallada" name="direccion_detallada" rows="4"></textarea>
+                    <label for="datos_socioeconomicos">Datos Socioeconómicos:</label>
+                    <textarea id="datos_socioeconomicos" name="datos_socioeconomicos" rows="4"></textarea>
+                    <label for="datos_estudio">Datos de Estudio/Educación:</label>
+                    <textarea id="datos_estudio" name="datos_estudio" rows="4"></textarea>
+                    <button type="submit"><i class="fas fa-save"></i> Guardar Datos de Perfil</button>
+                </form>
+            </div>
+
+            <div id="antecedentes" class="content-section">
+                <h2><i class="fas fa-file-medical"></i> Historial Médico y Antecedentes</h2>
+                <form onsubmit="saveAntecedentes(event)" class="antecedentes-form">
+                    <div class="form-grid">
+                        <div>
+                            <label><i class="fas fa-wine-glass"></i> Hábito de Alcohol:</label>
+                            <select id="habito_alcohol" name="habito_alcohol">
+                                <option value="no">No</option>
+                                <option value="si">Sí</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label><i class="fas fa-smoking"></i> Hábito de Tabaco:</label>
+                            <select id="habito_tabaco" name="habito_tabaco">
+                                <option value="no">No</option>
+                                <option value="si">Sí</option>
+                            </select>
+                        </div>
+                    </div>
+                    <label for="alergias"><i class="fas fa-allergies"></i> Alergias Conocidas:</label>
+                    <textarea id="alergias" name="alergias" rows="4"></textarea>
+                    <label for="antecedentes_familiares"><i class="fas fa-users"></i> Antecedentes Familiares:</label>
+                    <textarea id="antecedentes_familiares" name="antecedentes_familiares" rows="4"></textarea>
+                    <label for="cirugia_previa"><i class="fas fa-syringe"></i> Cirugías Previas:</label>
+                    <textarea id="cirugia_previa" name="cirugia_previa" rows="4"></textarea>
+                    <label for="medicamentos_actuales"><i class="fas fa-capsules"></i> Medicamentos Actuales:</label>
+                    <textarea id="medicamentos_actuales" name="medicamentos_actuales" rows="4"></textarea>
+                    <label for="condicion_cronica"><i class="fas fa-heartbeat"></i> Condiciones Crónicas:</label>
+                    <textarea id="condicion_cronica" name="condicion_cronica" rows="4"></textarea>
+                    <button type="submit"><i class="fas fa-save"></i> Guardar Historial Médico</button>
+                </form>
+            </div>
+
+            <div id="notificaciones" class="content-section">
+                <h2><i class="fas fa-bell"></i> Mis Notificaciones</h2>
+                <div id="notifications-list-container">
+                    <p class="empty-table">Cargando notificaciones...</p>
+                </div>
+            </div>
+            
+            <div id="configuracion" class="content-section">
+                <h2><i class="fas fa-cog"></i> Configuración de Cuenta</h2>
+                <form onsubmit="updateUserData(event)" class="profile-form" id="config-form">
+                    <h4 style="color: var(--color-principal); margin-top: 20px;">Datos de Contacto (Opcional)</h4>
+                    <label for="new_email">Nuevo Correo Electrónico (Opcional):</label>
+                    <input type="email" id="new_email" name="new_email">
+                    <label for="new_telefono">Nuevo Teléfono (Opcional):</label>
+                    <input type="text" id="new_telefono" name="new_telefono">
+                    <h4 style="color: var(--color-acento); margin-top: 30px;"><i class="fas fa-lock"></i> Contraseña</h4>
+                    <p style="font-size: 0.9em; color: #666;">**Se requiere la Contraseña Actual para cualquier cambio.**</p>
+                    <label for="contrasena_actual">Contraseña Actual:</label>
+                    <input type="password" id="contrasena_actual" name="contrasena_actual" required>
+                    <label for="nueva_contrasena">Nueva Contraseña (Opcional):</label>
+                    <input type="password" id="nueva_contrasena" name="nueva_contrasena" placeholder="Mín. 6 caracteres">
+                    <button type="submit"><i class="fas fa-sync-alt"></i> Actualizar Datos de Acceso</button>
+                </form>
+            </div>
+
+            <div id="citas" class="content-section">
+                <h2><i class="fas fa-calendar-check"></i> Gestión de Citas</h2>
+                
+                <h3><i class="fas fa-plus-circle"></i> Agendar Nueva Cita</h3>
+                <form onsubmit="agendarCita(event)" class="cita-form" style="padding: 20px; border: 1px dashed var(--color-principal); border-radius: 8px; margin-bottom: 30px;">
+                    <div class="form-grid">
+                        <div>
+                            <label for="agendar-especialidad">Especialidad:</label>
+                            <select id="agendar-especialidad" onchange="loadDoctores(this.value)" required>
+                                <option value="">Cargando Especialidades...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="agendar-doctor">Doctor:</label>
+                            <select id="agendar-doctor" onchange="loadHorarioDoctor(this.value)" required>
+                                <option value="">Seleccione Doctor</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="horario-info" style="display:none;"></div>
+                    
+                    <div class="form-grid" style="margin-top: 15px;">
+                        <div>
+                            <label for="agendar-fecha">Fecha:</label>
+                            <input type="date" id="agendar-fecha" required>
+                        </div>
+                        <div>
+                            <label for="agendar-hora">Hora:</label>
+                            <input type="time" id="agendar-hora" required>
+                        </div>
+                    </div>
+                    <label for="agendar-motivo">Motivo de la Consulta:</label>
+                    <textarea id="agendar-motivo" rows="2" placeholder="Describa brevemente el motivo de su visita." required></textarea>
+                    
+                    <button type="submit"><i class="fas fa-save"></i> Solicitar Cita</button>
+                </form>
+                
+                <h3><i class="fas fa-history"></i> Historial de Citas</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha y Hora</th>
+                            <th>Doctor</th>
+                            <th>Motivo</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historial-citas-body">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div id="medicamentos" class="content-section">
+                <h2><i class="fas fa-prescription-bottle-alt"></i> Solicitudes de Medicamentos</h2>
+                <h3><i class="fas fa-upload"></i> Solicitar Medicamentos por Receta</h3>
+                <form onsubmit="solicitarMedicamento(event)" class="medicamento-form" style="padding: 20px; border: 1px dashed var(--color-acento); border-radius: 8px; margin-bottom: 30px;">
+                    <h4><i class="fas fa-pills"></i> Información del Medicamento</h4>
+                    <div class="form-grid">
+                        <div>
+                            <label for="nombre_medicamento">Nombre del Medicamento:</label>
+                            <input type="text" id="nombre_medicamento" name="nombre_medicamento" required>
+                        </div>
+                        <div>
+                            <label for="dosis_mg">Dosis/Concentración (mg/ml):</label>
+                            <input type="text" id="dosis_mg" name="dosis_mg" required>
+                        </div>
+                        <div>
+                            <label for="cantidad">Cantidad Requerida:</label>
+                            <input type="number" id="cantidad" name="cantidad" min="1" required>
+                        </div>
+                    </div>
+                    <label for="doctor_solicitante">Doctor/Médico que solicitó (Nombre y Apellido):</label>
+                    <input type="text" id="doctor_solicitante" name="doctor_solicitante" required>
+                    <label for="notas_adicionales">Notas Adicionales:</label>
+                    <textarea id="notas_adicionales" name="notas_adicionales" rows="2"></textarea>
+                    <hr>
+                    <div>
+                        <label for="receta-file"><i class="fas fa-file-upload"></i> Receta Médica Adjunta (JPG, PNG o PDF):</label>
+                        <input type="file" id="receta-file" name="receta_adjunta" accept=".jpg, .jpeg, .png, .pdf" required>
+                    </div>
+                    <button type="submit"><i class="fas fa-paper-plane"></i> Enviar Solicitud</button>
+                </form>
+                <h3><i class="fas fa-list-alt"></i> Historial de Solicitudes</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha Sol.</th>
+                            <th>Medicamento/Detalle</th>
+                            <th>Atendido Por</th>
+                            <th>Estado</th>
+                            <th>Receta</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historial-medicamentos-body">
+                        </tbody>
+                </table>
+            </div>
+
+            <div id="familiares" class="content-section">
+                <h2><i class="fas fa-users"></i> Gestión de Familiares y Menores</h2>
+                <h3><i class="fas fa-plus-circle"></i> Agregar Nuevo Familiar/Menor</h3>
+                <form onsubmit="saveFamiliar(event)" class="familiar-form" style="padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 30px;">
+                    <div class="form-grid">
+                        <div>
+                            <label for="nombre">Nombre:</label>
+                            <input type="text" id="nombre" name="nombre" required>
+                        </div>
+                        <div>
+                            <label for="apellido">Apellido:</label>
+                            <input type="text" id="apellido" name="apellido">
+                        </div>
+                        <div>
+                            <label for="cedula">Cédula o Partida de Nacimiento:</label>
+                            <input type="text" id="cedula" name="cedula" required>
+                        </div>
+                        <div>
+                            <label for="fecha_nacimiento">Fecha de Nacimiento:</label>
+                            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required>
+                        </div>
+                        <div>
+                            <label for="relacion">Relación:</label>
+                            <select id="relacion" name="relacion" required>
+                                <option value="Hijo(a)">Hijo(a)</option>
+                                <option value="Cónyuge">Cónyuge</option>
+                                <option value="Padre/Madre">Padre/Madre</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit"><i class="fas fa-user-plus"></i> Guardar Familiar</button>
+                </form>
+                <h3><i class="fas fa-list"></i> Lista de Familiares Registrados</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre Completo</th>
+                            <th>Cédula</th>
+                            <th>Relación</th>
+                            <th>Fecha Nacimiento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="familiares-list-body">
+                        </tbody>
+                </table>
+            </div>
+            
+        </div>
+    </div>
+    
+    <div id="overlay" onclick="toggleMenu()"></div>
+    
+    <div id="toast-notification">Mensaje</div>
+
+</body>
+</html>

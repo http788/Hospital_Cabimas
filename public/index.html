@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital General Dr. Adolfo D' Empaire - Cuidado y Compromiso</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        /* ==================================================================== */
+        /* 1. CSS PROFESIONAL (Paleta: Blanco, Azul #0D47A1 y Rojo #D32F2F) */
+        /* ==================================================================== */
+        
+        :root {
+            --color-principal: #0D47A1; /* Azul principal */
+            --color-acento: #D32F2F;   /* Rojo acento */
+            --color-fondo: #f8f9fa;    /* <-- FONDO BLANCO HUESO */
+            --color-panel-bg: #FFFFFF; /* <-- TARJETAS BLANCAS */
+            --color-texto-claro: #FFFFFF;
+            --color-texto-oscuro: #212529; /* Casi negro */
+            --color-texto-secundario: #555;
+            --sombra-3d: 0 10px 30px rgba(0, 0, 0, 0.07); /* Sombra 3D sutil */
+            --sombra-3d-hover: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Reset y Base --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--color-fondo);
+            color: var(--color-texto-oscuro);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--color-principal);
+            margin-bottom: 20px;
+            line-height: 1.3;
+            font-weight: 700;
+        }
+        
+        p {
+            color: var(--color-texto-secundario);
+            margin-bottom: 15px;
+            font-size: 1.05em;
+        }
+        
+        section {
+            padding: 60px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.2em;
+            margin-bottom: 40px;
+        }
+        .section-title i {
+            color: var(--color-acento);
+            margin-right: 10px;
+        }
+
+        /* --- Header (Encabezado Fijo y Profesional) --- */
+        header {
+            background-color: var(--color-panel-bg);
+            padding: 15px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 3px solid var(--color-principal);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+        }
+        
+        .logo img {
+            width: 50px;
+            height: 50px;
+        }
+
+        .logo h1 {
+            font-size: 1.3em;
+            margin-bottom: 0;
+            color: var(--color-principal);
+        }
+
+        /* --- Botón 3D (Rojo) --- */
+        .btn-rojo {
+            background-color: var(--color-acento);
+            color: var(--color-texto-claro);
+            padding: 12px 22px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.95em;
+            border: none;
+            border-bottom: 3px solid #A00000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.15s ease-out;
+            transform: translateY(0);
+        }
+        .btn-rojo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            background-color: #E53935;
+        }
+
+        /* --- Estilo de Tarjeta 3D (Fondo Blanco) --- */
+        .card-3d {
+            background-color: var(--color-panel-bg);
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: var(--sombra-3d);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-3d:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--sombra-3d-hover);
+        }
+
+        /* --- MODIFICADO: Sección Hero (Fondo Azul) --- */
+        #hero {
+            background-color: var(--color-principal); /* <-- FONDO AZUL */
+            color: var(--color-texto-claro);
+            padding-top: 80px;
+            padding-bottom: 80px;
+        }
+        
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            gap: 40px;
+        }
+        
+        .hero-text h2 {
+            font-size: 2.8em;
+            font-weight: 700;
+            color: var(--color-texto-claro);
+            line-height: 1.2;
+        }
+        
+        .hero-text h2 strong {
+            color: var(--color-acento); /* <-- MODIFICADO A ROJO */
+        }
+
+        .hero-text p {
+            font-size: 1.2em;
+            color: #E0E0E0; /* Texto Gris Claro */
+            margin-top: 20px;
+        }
+        
+        .hero-image img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+
+        /* --- Sección Misión / Visión (Tono Socialista) --- */
+        #mision-vision {
+            /* Fondo blanco/hueso por defecto */
+        }
+        .mision-vision-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .mision-vision-grid h3 {
+            color: var(--color-acento);
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* --- Sección Portal Web --- */
+        #portal-features {
+            text-align: center;
+            background-color: #f0f4f8; /* Fondo gris azulado sutil */
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 40px;
+        }
+        .feature-item {
+            padding: 30px 20px;
+            background-color: var(--color-panel-bg);
+            border: 2px solid var(--color-panel-bg);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: var(--sombra-3d);
+        }
+        .feature-item:hover {
+            box-shadow: var(--sombra-3d-hover);
+            transform: translateY(-5px);
+            border-color: var(--color-principal);
+        }
+        .feature-item i {
+            font-size: 3em;
+            color: var(--color-principal);
+            margin-bottom: 20px;
+        }
+        .feature-item h3 {
+            font-size: 1.3em;
+            color: var(--color-texto-oscuro);
+        }
+        .feature-item p {
+            font-size: 0.95em;
+        }
+
+        /* --- RE-AÑADIDO: Programa Renal --- */
+        #programa-renal {
+            background-color: var(--color-principal); /* <-- FONDO AZUL */
+            color: var(--color-texto-claro);
+            padding: 60px 0;
+            text-align: center;
+        }
+        #programa-renal h2 {
+            color: var(--color-texto-claro);
+            font-size: 2.2em;
+        }
+        #programa-renal p {
+            color: #E0E0E0;
+            font-size: 1.15em;
+            max-width: 700px;
+            margin: 0 auto 30px auto;
+        }
+
+
+        /* --- MODIFICADO: Sección Noticias (Imágenes Completas) --- */
+        #noticias {
+            /* Fondo blanco/hueso por defecto */
+        }
+        
+        .noticias-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* Filas de 3 */
+            gap: 30px;
+        }
+        
+        .noticia-card {
+            padding: 0;
+            overflow: hidden;
+            cursor: pointer;
+            /* height: 280px; */ /* <-- ELIMINADA ALTURA FIJA */
+            border-radius: 10px;
+            background-color: transparent; /* Fondo de tarjeta transparente */
+            box-shadow: none; /* Sombra se aplica a la imagen */
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .noticia-card img {
+            width: 100%;
+            height: auto; /* <-- IMAGEN COMPLETA */
+            display: block; /* Evita espacio extra */
+            border-radius: 10px; /* Redondeo en la imagen */
+            margin: 0;
+            box-shadow: var(--sombra-3d); /* Sombra en la imagen */
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        
+        /* Efecto de expansión al pasar el ratón */
+        .noticia-card:hover img {
+            box-shadow: var(--sombra-3d-hover);
+            transform: scale(1.05); /* Efecto de expansión */
+        }
+
+        /* --- MODIFICADO: Sección Especialidades (Filas de 3) --- */
+        #especialidades {
+             background-color: #f0f4f8; /* Fondo gris azulado sutil */
+        }
+        .especialidades-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* <-- FILAS DE 3 */
+            gap: 20px;
+        }
+        .especialidad-item {
+            text-align: center;
+            padding: 25px 20px;
+            transition: all 0.3s ease;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: var(--sombra-3d);
+        }
+        .especialidad-item i {
+            font-size: 2.5em;
+            color: var(--color-principal);
+            margin-bottom: 15px;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+        .especialidad-item span {
+            font-weight: 600;
+            color: var(--color-texto-oscuro);
+            font-size: 1.1em;
+        }
+        .especialidad-item:hover {
+            box-shadow: var(--sombra-3d-hover);
+            transform: translateY(-5px);
+        }
+        .especialidad-item:hover i {
+            transform: scale(1.1);
+            color: var(--color-acento);
+        }
+
+        /* --- Footer (Pie de Página Profesional) --- */
+        footer {
+            background-color: var(--color-principal);
+            color: #E0E0E0;
+            padding: 60px 0 0 0;
+            margin-top: 40px;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 40px;
+            padding-bottom: 40px;
+        }
+        .footer-col h3 {
+            color: var(--color-texto-claro);
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--color-acento);
+            padding-bottom: 8px;
+            display: inline-block;
+        }
+        .footer-col .logo-footer {
+            width: 80px;
+            margin-bottom: 15px;
+            background: #fff;
+            border-radius: 50%;
+            padding: 5px;
+        }
+        .footer-col p { color: #E0E0E0; font-size: 0.95em; margin-bottom: 10px; }
+        .footer-col ul { list-style: none; }
+        .footer-col ul li { margin-bottom: 10px; }
+        .footer-col ul a { color: #E0E0E0; text-decoration: none; transition: color 0.3s ease; }
+        .footer-col ul a:hover { color: var(--color-acento); padding-left: 5px; }
+        .footer-social a { color: #E0E0E0; margin-right: 15px; font-size: 1.5em; transition: color 0.3s; }
+        .footer-social a:hover { color: var(--color-acento); }
+        
+        .footer-bottom {
+            text-align: center;
+            padding: 20px 0;
+            font-size: 0.9em;
+            background-color: #003366;
+            color: var(--color-texto-claro); /* <-- MODIFICADO A BLANCO */
+        }
+
+        /* --- RESPONSIVIDAD (Móvil) --- */
+        @media (max-width: 900px) {
+            #hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding-top: 60px;
+            }
+            .hero-text h2 { font-size: 2.2em; }
+            .mision-vision-grid, .features-grid, .noticias-grid {
+                grid-template-columns: 1fr; /* Apilar todo a 1 columna */
+            }
+             .especialidades-grid {
+                grid-template-columns: 1fr 1fr; /* 2 columnas */
+            }
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 600px) {
+            section { padding: 40px 0; }
+            header { padding: 10px 0; }
+            .header-content { flex-direction: column; gap: 15px; }
+            .logo h1 { font-size: 1.1em; text-align: center; }
+            .hero-text h2 { font-size: 1.8em; }
+            .especialidades-grid, .footer-grid {
+                grid-template-columns: 1fr; /* 1 columna */
+            }
+            .footer-grid { text-align: center; }
+            .footer-col h3 { display: inline-block; }
+            .footer-social { margin-top: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container header-content">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Logo Hospital D' Empaire">
+                <h1>Hospital General Dr. Adolfo D' Empaire</h1>
+            </a>
+            <a href="login.html" class="btn-rojo">
+                <i class="fas fa-user-lock"></i> Ingresar al Sistema
+            </a>
+        </div>
+    </header>
+
+    <main>
+
+        <section id="hero">
+            <div class="container hero-grid">
+                <div class="hero-text">
+                    <h2>Innovación y Calidez Humana al Servicio de su <strong>Salud.</strong></h2>
+                    <p>Garantizamos el derecho a la salud pública con excelencia médica y un profundo compromiso social.</p>
+                </div>
+                <div class="hero-image">
+                    <img src="hospital.png" alt="Instalaciones del Hospital Dr. Adolfo D' Empaire">
+                </div>
+            </div>
+        </section>
+
+        <section id="mision-vision" class="container">
+                <div class="mision-vision-grid">
+                    <div class="card-3d">
+                        <h3><i class="fas fa-bullseye"></i> Nuestra Misión</h3>
+                        <p>Garantizar el <strong>derecho fundamental a la salud</strong> de toda la comunidad, ofreciendo atención médica integral, gratuita y de la más alta calidad, con un profundo sentido de humanismo y <strong>compromiso social</strong>.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3><i class="fas fa-eye"></i> Nuestra Visión</h3>
+                        <p>Ser una institución de salud pública de referencia nacional, líder en la <strong>atención al pueblo</strong> y reconocida por su excelencia, equidad y su rol activo en la construcción del bienestar colectivo.</p>
+                    </div>
+                </div>
+        </section>
+        
+        <section id="portal-features" style="background-color: #f0f4f8;">
+            <div class="container">
+                <h2 class="section-title"><i class="fas fa-desktop"></i> Conozca Nuestro Portal Web</h2>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <i class="fas fa-user-shield"></i>
+                        <h3>Panel de Administrador</h3>
+                        <p>Gestione doctores, supervise el censo de camas, administre el inventario y emita alertas epidemiológicas cruciales.</p>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-user-doctor"></i>
+                        <h3>Panel de Doctor</h3>
+                        <p>Acceda al Expediente Clínico Electrónico (ECE), gestione sus citas, registre visitas y emita récipes digitales al instante.</p>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-user-injured"></i>
+                        <h3>Panel de Paciente</h3>
+                        <p>Agende sus citas, consulte su historial médico, solicite medicamentos a farmacia y reciba notificaciones de salud.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="programa-renal">
+            <div class="container">
+                <h2><i class="fas fa-seedling"></i> Programa de Nutrición Renal</h2>
+                <p>El acceso a una nutrición especializada es un derecho. Ofrecemos un programa de apoyo integral y gratuito para pacientes con enfermedad renal.</p>
+                <a href="https://www.who.int/es/news-room/fact-sheets/detail/healthy-diet" target="_blank" class="btn-rojo">Conocer Más del Programa</a>
+            </div>
+        </section>
+
+        <section id="noticias" class="container">
+            <h2 class="section-title"><i class="fas fa-newspaper"></i> Galería de Noticias</h2>
+            <div class="noticias-grid">
+                
+                <div class="noticia-card">
+                    <img src="noticias1.png" alt="Galería de noticias del hospital 1">
+                </div>
+                
+                <div class="noticia-card">
+                    <img src="noticias2.png" alt="Galería de noticias del hospital 2">
+                </div>
+
+                <div class="noticia-card">
+                    <img src="noticias3.png" alt="Galería de noticias del hospital 3">
+                </div>
+
+            </div>
+        </section>
+
+        <section id="especialidades">
+            <div class="container">
+                <h2 class="section-title">
+                    Nuestras Especialidades
+                </h2>
+                <div class="especialidades-grid">
+                    <div class="especialidad-item">
+                        <i class="fas fa-heart-pulse"></i>
+                        <span>Cardiología</span>
+                    </div>
+                    <div class="especialidad-item">
+                        <i class="fas fa-child"></i>
+                        <span>Pediatría</span>
+                    </div>
+                    <div class="especialidad-item">
+                        <i class="fas fa-user-doctor"></i>
+                        <span>Medicina Interna</span>
+                    </div>
+                    <div class="especialidad-item">
+                        <i class="fas fa-lungs"></i>
+                        <span>Neumonología</span>
+                    </div>
+                    <div class="especialidad-item">
+                        <i class="fas fa-brain"></i>
+                        <span>Neurología</span>
+                    </div>
+                    <div class="especialidad-item">
+                        <i class="fas fa-bone"></i>
+                        <span>Traumatología</span>
+                    </div>
+                     <div class="especialidad-item">
+                        <i class="fas fa-person-pregnant"></i>
+                        <span>Ginecología</span>
+                    </div>
+                    <div class="especialidad-item">
+                        <i class="fas fa-eye"></i>
+                        <span>Oftalmología</span>
+                    </div>
+                     <div class="especialidad-item">
+                        <i class="fas fa-bacteria"></i>
+                        <span>Infectología</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                
+                <div class="footer-col">
+                    <img src="logo.png" alt="Logo Hospital" class="logo-footer">
+                    <p>Comprometidos con la salud pública y el bienestar de la comunidad de Cabimas y la Costa Oriental del Lago.</p>
+                </div>
+                
+                <div class="footer-col">
+                    <h3>Navegación</h3>
+                    <ul>
+                        <li><a href="#mision-vision">Misión y Visión</a></li>
+                        <li><a href="#noticias">Noticias</a></li>
+                        <li><a href="#especialidades">Especialidades</a></li>
+                        <li><a href="login.html">Ingreso al Sistema</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h3>Especialidades</h3>
+                    <ul>
+                        <li><a href="#">Cardiología</a></li>
+                        <li><a href="#">Pediatría</a></li>
+                        <li><a href="#">Medicina Interna</a></li>
+                        <li><a href="#">Cirugía General</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h3>Contacto y Redes</h3>
+                    <p>Av. 32, con, C. 31, Cabimas 4013, Zulia</p>
+                    <p>Tel: (0264) 241-5033</p>
+                    <div class="footer-social">
+                        <a href="https://www.instagram.com/hospitaldradolfodempaire/" target="_blank" title="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://www.facebook.com/p/Hospital-General-de-Cabimas-Dr-Adolfo-DEmpaire-100077067501951/?locale=es_LA" target="_blank" title="Facebook">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="footer-bottom" style="background-color: #003366;">
+            <p style="color: #FFFFFF;">&copy; 2025 Hospital General Dr. Adolfo D' Empaire. Desarrollado como proyecto de servicio público.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

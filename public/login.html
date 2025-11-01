@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingreso al Sistema | Hospital Dr. Adolfo D'Empaire</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* --- MODIFICADO: Paleta de Azules más Claros --- */
+        :root {
+            --dark-blue: #0D47A1;      /* (Antes #001f3f) Azul Principal del Admin */
+            --red-accent: #dc3545;
+            --white: #ffffff;
+            --dark-blue-form: #1565C0;  /* (Antes #0d3058) Azul Intermedio */
+            --dark-blue-input: #1E88E5; /* (Antes #003366) Azul Claro para Inputs */
+            --blue-border: #42A5F5;   /* Borde más claro */
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--dark-blue); /* Fondo azul principal */
+            color: var(--white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        /* Logo del Hospital */
+        .login-logo {
+            width: 150px;
+            height: auto;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+        }
+
+        /* Contenedor Principal del Formulario */
+        .login-container {
+            background-color: var(--dark-blue-form); /* Formulario azul intermedio */
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 
+                0 15px 30px rgba(0, 0, 0, 0.5), 
+                inset 0 0 20px rgba(255, 255, 255, 0.15); 
+            width: 100%;
+            max-width: 450px;
+            position: relative; 
+        }
+
+        /* Títulos */
+        .login-container h2 {
+            text-align: center;
+            color: var(--white);
+            margin-top: 10px;
+            margin-bottom: 25px;
+            text-shadow: 0 3px 5px rgba(0, 0, 0, 0.6); 
+        }
+
+        /* Estilos de los campos de entrada */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        /* Estilo general de inputs y selects */
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--blue-border); /* Borde azul claro */
+            border-radius: 6px;
+            box-sizing: border-box;
+            background-color: var(--dark-blue-input); /* Input azul claro */
+            color: var(--white);
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--red-accent);
+            outline: none;
+            box-shadow: 0 0 8px rgba(220, 53, 69, 0.5); 
+        }
+        
+        /* Placeholder color */
+        ::placeholder {
+            color: #BBDEFB; /* Azul pálido */
+            opacity: 0.9;
+        }
+
+        /* Contenedor especial para el campo de cédula (V/E + Input) */
+        .cedula-input-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .cedula-input-group select {
+            width: 60px;
+            border-right: none;
+            border-radius: 6px 0 0 6px;
+        }
+
+        .cedula-input-group input {
+            flex-grow: 1; 
+            border-radius: 0 6px 6px 0;
+        }
+        
+        /* Contenedor especial para la contraseña (Input + Ojito) */
+        .password-input-group {
+            position: relative;
+        }
+
+        .password-input-group input {
+            padding-right: 40px; 
+            width: 100%;
+            border-radius: 6px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #BBDEFB; /* Color del icono */
+            cursor: pointer;
+            z-index: 10;
+            transition: color 0.2s;
+        }
+        
+        .toggle-password:hover {
+            color: var(--white);
+        }
+
+        /* --- ELIMINADO: CSS de .forgot-password --- */
+
+        /* Botón de Ingreso */
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--red-accent);
+            color: var(--white);
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 5px 8px rgba(0, 0, 0, 0.4); 
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            background-color: #bd2130; 
+            transform: translateY(-3px); 
+        }
+
+        /* Flecha de Regreso a Index */
+        .back-arrow {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 28px;
+            color: var(--red-accent);
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .back-arrow:hover {
+            color: #ff6b7b;
+        }
+
+        /* Mensajes de Error y Estado */
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: none; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .error {
+            background-color: #ffe0e6;
+            color: var(--red-accent);
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        /* Enlace de Registro */
+        .register-link {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 1em;
+            color: #BBDEFB; /* Azul pálido */
+        }
+        .register-link a {
+            color: var(--white);
+            font-weight: bold;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .register-link a:hover {
+            text-decoration: underline;
+            color: #ff6b7b;
+        }
+        
+        /* Media Query para Responsive (Teléfono) */
+        @media (max-width: 600px) {
+            .login-container {
+                padding: 30px 20px;
+                width: 100%;
+            }
+            .login-logo {
+                width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <img src="hospital.png" alt="Logo Hospital" class="login-logo">
+
+    <div class="login-container">
+        <a href="index.html" class="back-arrow" title="Volver al Inicio">
+            &larr;
+        </a>
+
+        <h2>Ingreso al Sistema Hospitalario</h2>
+        <form id="login-form">
+            
+            <div class="form-group">
+                <label for="role">Tipo de Usuario</label>
+                <select id="role" name="role" required>
+                    <option value="" disabled selected>Seleccione su rol...</option>
+                    <option value="Administrador">Administrador</option>
+                    <option value="Doctor">Doctor</option>
+                    <option value="Paciente">Paciente</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="cedula">Cédula de Identidad</label>
+                <div class="cedula-input-group">
+                    <select id="prefix" name="prefix">
+                        <option value="V">V</option>
+                        <option value="E">E</option>
+                    </select>
+                    <input type="text" id="cedula" name="cedula" required placeholder="Ej: 7654321">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <div class="password-input-group">
+                    <input type="password" id="password" name="password" required placeholder="Contraseña">
+                    <span class="toggle-password" id="togglePassword">
+                        <i class="fas fa-eye"></i>
+                    </span>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-login">Ingresar</button>
+        </form>
+        
+        <div id="message-area" class="message"></div>
+
+        <div class="register-link">
+            ¿No tienes cuenta? <a href="register.html">Regístrate aquí</a>
+        </div>
+    </div>
+
+    <script>
+        // Función para mostrar/ocultar contraseña
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const passwordInput = document.getElementById('password');
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.querySelector('i').classList.toggle('fa-eye');
+            this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+
+        // Lógica de Ingreso
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const prefix = document.getElementById('prefix').value.trim();
+            const cedula_number = document.getElementById('cedula').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const selectedRole = document.getElementById('role').value;
+            const messageArea = document.getElementById('message-area');
+            
+            const cedula = prefix + cedula_number;
+
+            messageArea.style.display = 'none';
+            messageArea.className = 'message';
+            messageArea.textContent = '';
+            
+            if (!cedula_number || !password || !selectedRole) {
+                 messageArea.className = 'message error';
+                 messageArea.textContent = 'Por favor, complete todos los campos y seleccione su rol.';
+                 messageArea.style.display = 'block';
+                 return;
+            }
+
+            try {
+                // URL Relativa (Profesional)
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ cedula, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const token = data.token;
+                    const actualRole = data.rol; 
+                    
+                    if (actualRole !== selectedRole) {
+                        messageArea.className = 'message error';
+                        messageArea.textContent = `Error: Su cédula es de rol "${actualRole}", no "${selectedRole}". Ingrese correctamente.`;
+                        messageArea.style.display = 'block';
+                        return; 
+                    }
+
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('rol', actualRole);
+                    localStorage.setItem('user_name', actualRole); 
+
+                    messageArea.className = 'message success';
+                    messageArea.textContent = `¡Bienvenido! Rol: ${actualRole}. Redirigiendo...`; 
+                    messageArea.style.display = 'block';
+
+                    let redirectUrl = '';
+                    switch (actualRole) {
+                        case 'Administrador':
+                            redirectUrl = 'admin.html';
+                            break;
+                        case 'Doctor':
+                            redirectUrl = 'doctor.html';
+                            break;
+                        case 'Paciente':
+                            redirectUrl = 'paciente.html';
+                            break;
+                        default:
+                            redirectUrl = 'index.html'; 
+                    }
+
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 1500); 
+
+                } else {
+                    messageArea.className = 'message error';
+                    messageArea.textContent = data.msg || 'Credenciales inválidas o cuenta inactiva.';
+                    messageArea.style.display = 'block';
+                    console.error('Error de autenticación:', data.msg);
+                }
+
+            } catch (error) {
+                console.error('Error de conexión:', error);
+                messageArea.className = 'message error';
+                messageArea.textContent = 'No se pudo conectar con el servidor (Node.js). Asegúrese de que esté corriendo.';
+                messageArea.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
