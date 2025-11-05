@@ -3134,6 +3134,91 @@ app.put('/api/admin/actualizar-usuario', auth(['Administrador']), async (req, re
 
 
 
+// server.js (en la sección de rutas /api/admin)
+
+// ------------------------------------------------------------------------------
+// 8. RECURSOS HUMANOS (CRUD BÁSICO)
+// ------------------------------------------------------------------------------
+
+// RUTA: POST /api/admin/recursos-humanos
+app.post('/api/admin/recursos-humanos', auth(['Administrador']), async (req, res) => {
+    const { nombre, apellido, cedula, telefono, email, cargo, horario } = req.body;
+    if (!nombre || !apellido || !cedula || !cargo || !horario) {
+        return res.status(400).json({ msg: 'Faltan campos obligatorios para el registro de personal.' });
+    }
+    try {
+        await pool.query(
+            `INSERT INTO personal_rrhh (nombre, apellido, cedula, telefono, email, cargo, horario) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [nombre, apellido, cedula, telefono, email, cargo, horario]
+        );
+        res.status(201).json({ msg: 'Personal registrado con éxito.' });
+    } catch (err) {
+        console.error('Error al agregar personal:', err.message);
+        res.status(500).json({ msg: 'Error del servidor al agregar personal.' });
+    }
+});
+
+// RUTA: GET /api/admin/recursos-humanos
+app.get('/api/admin/recursos-humanos', auth(['Administrador']), async (req, res) => {
+    try {
+        const personal = await pool.query(`
+            SELECT id_personal, nombre, apellido, cedula, telefono, email, cargo, horario
+            FROM personal_rrhh
+            ORDER BY cargo, apellido
+        `);
+        res.json(personal.rows);
+    } catch (err) {
+        console.error('Error al obtener personal:', err.message);
+        res.status(500).json({ msg: 'Error del servidor al obtener personal.' });
+    }
+});
+
+// RUTA: DELETE /api/admin/recursos-humanos/:id_personal
+app.delete('/api/admin/recursos-humanos/:id_personal', auth(['Administrador']), async (req, res) => {
+    const { id_personal } = req.params;
+    try {
+        const result = await pool.query('DELETE FROM personal_rrhh WHERE id_personal = $1', [id_personal]);
+        if (result.rowCount === 0) return res.status(404).json({ msg: 'Personal no encontrado.' });
+        res.json({ msg: 'Personal eliminado con éxito.' });
+    } catch (err) {
+        console.error('Error al eliminar personal:', err.message);
+        res.status(500).json({ msg: 'Error del servidor al eliminar personal.' });
+    }
+});
+// ------------------------------------------------------------------------------
+// 8.X RUTA CENSO QUIRÓFANO
+// ------------------------------------------------------------------------------
+
+// RUTA: GET /api/admin/camas/quirofano
+// Propósito: Listar solo las 7 camas del quirófano
+app.get('/api/admin/camas/quirofano', auth(['Administrador']), async (req, res) => {
+    try {
+        // La consulta busca camas cuyo número empiece con 'Q' (Q1, Q2, etc.)
+        const camas = await pool.query(`
+            SELECT
+                c.*, 
+                upac.nombre AS paciente_nombre, upac.apellido AS paciente_apellido, upac.cedula AS paciente_cedula,
+                udoc.nombre AS doctor_nombre, udoc.apellido AS doctor_apellido, udoc.cedula AS doctor_cedula,
+                d.especialidad AS doctor_especialidad
+            FROM camas c
+            LEFT JOIN usuarios upac ON c.fk_paciente_actual = upac.id_usuario 
+            LEFT JOIN usuarios udoc ON c.fk_doctor_acargo = udoc.id_usuario
+            LEFT JOIN doctores d ON c.fk_doctor_acargo = d.fk_usuario 
+            WHERE c.numero_cama LIKE 'Q%' 
+            ORDER BY c.numero_cama ASC
+        `);
+        res.json(camas.rows);
+    } catch (err) {
+        console.error('Error al obtener censo de quirófano:', err.message);
+        res.status(500).send('Error del servidor al cargar el censo de quirófano.');
+    }
+});
+
+
+
+
+
 
 
 
@@ -3189,6 +3274,7 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
 
 
 
