@@ -125,8 +125,10 @@ pool.connect((err, client, release) => {
 // ==============================================================================
 async function initializeCamas() {
     const totalCamas = 140;
+    const totalCamasQuirofano = 7; // 🟢 NUEVO
     let successCount = 0;
     const ubicacion = 'Piso 1 - Sala General'; 
+    const ubicacionQuirofano = 'Piso 2 - Recuperación Quirúrgica'; // 🟢 NUEVA UBICACIÓN
 
     // Verificar si ya existen 140 camas o más
     const existingCamas = await pool.query('SELECT COUNT(*) FROM camas');
@@ -156,9 +158,30 @@ async function initializeCamas() {
         console.log(`✅ [CENSO DE CAMAS]: ${successCount} camas iniciales (1-${totalCamas}) creadas con éxito. ¡YA PUEDE VER EL CENSO!`);
     }
 }
-initializeCamas(); 
 
 
+// 🟢 NUEVA LÓGICA: GENERAR CAMAS DE QUIRÓFANO 🟢
+    console.log(`\n🔪 [CENSO DE QUIRÓFANO]: Generando ${totalCamasQuirofano} camas de quirófano (Q1-Q7)...`);
+    for (let i = 1; i <= totalCamasQuirofano; i++) {
+        try {
+            // Se usa un prefijo "Q" + Número para que no haya conflicto con las 140 camas
+            await pool.query(
+                `INSERT INTO camas (numero_cama, estado, ubicacion) 
+                 VALUES ($1, 'Libre', $2) 
+                 ON CONFLICT (numero_cama) DO NOTHING;`, 
+                [`Q${i}`, ubicacionQuirofano] // Número de cama: Q1, Q2, etc.
+            );
+            successCount++;
+        } catch (error) {
+             console.error('Error al insertar cama de quirófano:', error.message);
+        }
+    }
+    
+    if (successCount > 0) {
+        console.log(`✅ [CENSO DE CAMAS]: ${successCount} camas iniciales creadas con éxito.`);
+    }
+}
+initializeCamas();
 
 
 
@@ -3166,6 +3189,7 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
 
 
 
