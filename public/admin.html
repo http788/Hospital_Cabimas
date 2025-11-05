@@ -1429,6 +1429,8 @@
             });
         }
         
+        // admin.html
+
         async function handleCamaFormSubmit(id_cama) {
             const nuevoEstado = document.getElementById('cama-accion').value;
             if (!nuevoEstado) return showToast('Debe seleccionar una acción.', 'error');
@@ -1437,53 +1439,48 @@
             let fk_doctor_id = null;
             let motivo_ingreso = '';
 
+            // --- INICIO DEL BLOQUE CRÍTICO: try...catch para toda la lógica de búsqueda ---
             try {
                 if (nuevoEstado === 'Ocupada') {
-                    const cedulaPac = document.getElementById('cama-paciente-cedula').value;
-                    const cedulaDoc = document.getElementById('cama-doctor-cedula').value;
-                    if (!cedulaPac || !cedulaDoc) return showToast('Cédula de paciente y doctor son requeridas.', 'error');
-
-                    const pac = await apiFetch(`/pacientes/buscar-id?cedula=${cedulaPac}`);
-                    if (!pac.id_usuario || pac.nombre_rol !== 'Paciente') return showToast('Paciente no encontrado.', 'error');
+                    const cedulaPac = document.getElementById('cama-paciente-cedula').value.trim();
+                    const cedulaDoc = document.getElementById('cama-doctor-cedula').value.trim();
                     
-                    const doc = await apiFetch(`/pacientes/buscar-id?cedula=${cedulaDoc}`);
-                    if (!doc.id_usuario || doc.nombre_rol !== 'Doctor') return showToast('Doctor no encontrado.', 'error');
+                    if (!cedulaPac || !cedulaDoc) {
+                        return showToast('Error: Cédula de paciente y doctor son requeridas para ocupar la cama.', 'error');
+                    }
 
+                    // 1. Buscar Paciente por Cédula (Retorna id_usuario)
+                    const pac = await apiFetch(`/pacientes/buscar-id?cedula=${cedulaPac}`);
+                    if (!pac || !pac.id_usuario || pac.nombre_rol !== 'Paciente') {
+                        return showToast('Error: Paciente no encontrado con esa Cédula o no es un Paciente activo.', 'error');
+                    }
+                    
+                    // 2. Buscar Doctor por Cédula (Retorna id_usuario)
+                    const doc = await apiFetch(`/pacientes/buscar-id?cedula=${cedulaDoc}`);
+                    if (!doc || !doc.id_usuario || doc.nombre_rol !== 'Doctor') {
+                        return showToast('Error: Doctor no encontrado con esa Cédula o no es un Doctor activo.', 'error');
+                    }
+
+                    // 3. Asignar los ID de Usuario (fk_usuario)
                     fk_paciente_id = pac.id_usuario;
                     fk_doctor_id = doc.id_usuario;
-                    motivo_ingreso = document.getElementById('cama-motivo').value;
+                    motivo_ingreso = document.getElementById('cama-motivo').value.trim();
+                    
+                    if (!motivo_ingreso) {
+                        return showToast('Error: El motivo de ingreso es obligatorio.', 'error');
+                    }
                 }
                 
+                // 4. Llamar al servidor (solo se ejecuta si las búsquedas de ID fueron exitosas)
                 await updateCamaEstado(id_cama, nuevoEstado, fk_paciente_id, fk_doctor_id, motivo_ingreso);
                 closeModal();
+
             } catch (error) {
-                showToast(`Error: ${error.message}`, 'error');
+                // 5. Capturar fallos de red o errores de la API (ej. 404/400 del buscar-id)
+                showToast(`Error al buscar usuario: ${error.message}`, 'error');
             }
-        }
-        
-        async function updateCamaEstado(id_cama, nuevoEstado, fk_paciente_id = null, fk_doctor_id = null, motivo_ingreso = '') {
-             try {
-                await apiFetch(`/camas/${id_cama}`, {
-                    method: 'PUT',
-                    body: JSON.stringify({ 
-                        estado: nuevoEstado, 
-                        fk_paciente_actual: fk_paciente_id, 
-                        motivo_ingreso: motivo_ingreso,
-                        fk_doctor_acargo: fk_doctor_id 
-                    })
-                });
-                showToast(`Cama ${id_cama} actualizada a ${nuevoEstado}.`, 'success');
-                loadCensoCamas();
-            } catch (error) {
-                showToast(`Error al actualizar la cama: ${error.message}`, 'error');
-                throw error;
-            }
-        }
-        
-        function toggleCamaForm(value) {
-            document.getElementById('cama-ocupar-detalle').style.display = (value === 'Ocupada') ? 'block' : 'none';
-        }
-        
+            // --- FIN DEL BLOQUE CRÍTICO ---
+        }        
         // --- 8. ALERTAS EPIDEMIOLÓGICAS ---
         async function loadAlertas() {
             contentArea.innerHTML = `
