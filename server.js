@@ -2858,6 +2858,8 @@ app.get('/api/admin/camas', auth(['Administrador']), async (req, res) => {
 
 // server.js
 
+// server.js (Reemplazar la ruta completa app.put('/api/admin/camas/:id_cama', ...)
+
 // 3. RUTA: PUT /api/admin/camas/:id_cama (Actualizar Estado, Ocupar, Liberar)
 app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) => {
     const { id_cama } = req.params;
@@ -2868,7 +2870,6 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
         return res.status(400).json({ msg: "El nuevo estado de la cama es requerido." });
     }
     
-    // --- INICIO DEL BLOQUE CRÍTICO: try...catch que debe envolver todo ---
     try {
         
         // Lógica de Liberación/Limpieza
@@ -2886,30 +2887,26 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
             return res.json({ msg: `Cama ${id_cama} actualizada. Estado: ${estado}` });
         }
 
-        // --- Lógica para OCUPADA ---
+        // --- Lógica para OCUPADA (Usamos el ID de Usuario directamente) ---
         
         // 0. VERIFICACIÓN CRÍTICA DE DATOS NECESARIOS
         if (!fk_paciente_actual || !fk_doctor_acargo || !motivo_ingreso) {
             return res.status(400).json({ msg: "Faltan datos de paciente, doctor o motivo de ingreso para ocupar la cama." });
         }
         
-        // 1. Mapear ID de Usuario (fk_usuario) a id_paciente (ID interno)
-        let pacienteIdEnTablaPacientes = null;
-        const pacienteResult = await pool.query('SELECT id_paciente FROM pacientes WHERE fk_usuario = $1', [fk_paciente_actual]);
-        if (pacienteResult.rows.length === 0) {
-            return res.status(400).json({ msg: `Error de Mapeo: El paciente con ID de usuario ${fk_paciente_actual} no está registrado en la tabla de pacientes.` });
+        // 1. Validar que el paciente existe en la tabla de pacientes
+        const pacienteCheck = await pool.query('SELECT 1 FROM pacientes WHERE fk_usuario = $1', [fk_paciente_actual]);
+        if (pacienteCheck.rows.length === 0) {
+            return res.status(400).json({ msg: `Error: El usuario con ID ${fk_paciente_actual} no está registrado en la tabla de pacientes.` });
         }
-        pacienteIdEnTablaPacientes = pacienteResult.rows[0].id_paciente;
         
-        // 2. Mapear ID de Usuario (fk_usuario) a id_doctor (ID interno)
-        let doctorIdEnTablaDoctores = null;
-        const doctorResult = await pool.query('SELECT id_doctor FROM doctores WHERE fk_usuario = $1', [fk_doctor_acargo]);
-        if (doctorResult.rows.length === 0) {
-            return res.status(400).json({ msg: `Error de Mapeo: El doctor con ID de usuario ${fk_doctor_acargo} no está registrado en la tabla de doctores.` });
+        // 2. Validar que el doctor existe y está activo en la tabla de doctores
+        const doctorCheck = await pool.query('SELECT 1 FROM doctores WHERE fk_usuario = $1', [fk_doctor_acargo]);
+        if (doctorCheck.rows.length === 0) {
+            return res.status(400).json({ msg: `Error: El usuario con ID ${fk_doctor_acargo} no está registrado en la tabla de doctores (¿está activado?).` });
         }
-        doctorIdEnTablaDoctores = doctorResult.rows[0].id_doctor;
 
-        // 3. Ejecutar la actualización con los IDs mapeados (id_paciente, id_doctor)
+        // 3. Ejecutar la actualización (Usando los IDs de usuario directamente)
         const query = `
             UPDATE camas 
             SET estado = $1, 
@@ -2923,9 +2920,9 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
         
         const result = await pool.query(query, [
             estado, 
-            pacienteIdEnTablaPacientes, // <-- Usamos el ID interno
+            fk_paciente_actual, // <-- ¡CORREGIDO! Usamos el ID de USUARIO
             motivo_ingreso, 
-            doctorIdEnTablaDoctores, // <-- Usamos el ID interno
+            fk_doctor_acargo,   // <-- ¡CORREGIDO! Usamos el ID de USUARIO
             id_cama
         ]); 
 
@@ -2936,14 +2933,11 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
         res.json({ msg: "Cama actualizada exitosamente", cama: result.rows[0] });
 
     } catch (error) {
-        // ESTO DEBE CAPTURAR CUALQUIER FALLO DEL SERVIDOR Y DEVOLVER JSON.
+        // Bloque final para asegurar que se responda JSON ante cualquier fallo
         console.error('Error FATAL al actualizar cama:', error.message, error.stack);
-        res.status(500).json({ msg: "Error interno FATAL del servidor. Revise si los datos de la DB son correctos." });
+        res.status(500).json({ msg: "Error interno FATAL del servidor. Revise las logs de la DB, la causa probable es una cédula incorrecta o un Doctor inactivo." });
     }
 });
- 
- 
- 
  
  
  
@@ -3160,5 +3154,6 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
 
 
