@@ -2833,14 +2833,14 @@ app.get('/api/admin/camas', auth(['Administrador']), async (req, res) => {
             SELECT
                 c.*, -- Selecciona todos los campos de camas
                 
-                -- Datos del PACIENTE
+                -- Datos del PACIENTE (usando 'upac')
                 upac.nombre AS paciente_nombre,
                 upac.apellido AS paciente_apellido,
                 upac.cedula AS paciente_cedula,
                 c.motivo_ingreso,
                 c.fecha_ingreso,
                 
-                -- Datos del DOCTOR
+                -- Datos del DOCTOR (usando 'udoc')
                 udoc.nombre AS doctor_nombre,
                 udoc.apellido AS doctor_apellido,
                 udoc.cedula AS doctor_cedula,
@@ -2849,13 +2849,13 @@ app.get('/api/admin/camas', auth(['Administrador']), async (req, res) => {
                 d.especialidad AS doctor_especialidad
             FROM camas c
             
-            -- JOIN con USUARIOS para datos del PACIENTE (upac)
+            -- JOIN con USUARIOS para datos del PACIENTE
             LEFT JOIN usuarios upac ON c.fk_paciente_actual = upac.id_usuario 
             
-            -- JOIN con USUARIOS para datos del DOCTOR (udoc)
+            -- JOIN con USUARIOS para datos del DOCTOR
             LEFT JOIN usuarios udoc ON c.fk_doctor_acargo = udoc.id_usuario
             
-            -- JOIN a la tabla DOCTORES (d) para obtener la ESPECIALIDAD
+            -- JOIN a la tabla DOCTORES para obtener la ESPECIALIDAD
             LEFT JOIN doctores d ON c.fk_doctor_acargo = d.fk_usuario 
             
             ORDER BY c.numero_cama::INTEGER ASC
@@ -2866,7 +2866,6 @@ app.get('/api/admin/camas', auth(['Administrador']), async (req, res) => {
         res.status(500).send('Error del servidor al cargar el censo.');
     }
 });
-
 // server.js
 
 // server.js
@@ -3167,6 +3166,7 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
 
 
 
