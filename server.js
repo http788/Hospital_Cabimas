@@ -2833,29 +2833,29 @@ app.get('/api/admin/camas', auth(['Administrador']), async (req, res) => {
             SELECT
                 c.*, -- Selecciona todos los campos de camas
                 
-                -- Datos del PACIENTE (Unión directa a USUARIOS)
-                up.nombre AS paciente_nombre,
-                up.apellido AS paciente_apellido,
-                up.cedula AS paciente_cedula,
+                -- Datos del PACIENTE
+                upac.nombre AS paciente_nombre,
+                upac.apellido AS paciente_apellido,
+                upac.cedula AS paciente_cedula,
                 c.motivo_ingreso,
                 c.fecha_ingreso,
                 
-                -- Datos del DOCTOR (Unión directa a USUARIOS)
-                ud.nombre AS doctor_nombre,
-                ud.apellido AS doctor_apellido,
-                ud.cedula AS doctor_cedula,
+                -- Datos del DOCTOR
+                udoc.nombre AS doctor_nombre,
+                udoc.apellido AS doctor_apellido,
+                udoc.cedula AS doctor_cedula,
                 
-                -- Necesitamos la especialidad, la obtenemos haciendo un JOIN extra a doctores
+                -- Especialidad del doctor
                 d.especialidad AS doctor_especialidad
             FROM camas c
             
-            -- JOIN con USUARIOS para datos del PACIENTE
-            LEFT JOIN usuarios up ON c.fk_paciente_actual = up.id_usuario 
+            -- JOIN con USUARIOS para datos del PACIENTE (upac)
+            LEFT JOIN usuarios upac ON c.fk_paciente_actual = upac.id_usuario 
             
-            -- JOIN con USUARIOS para datos del DOCTOR
-            LEFT JOIN usuarios ud ON c.fk_doctor_acargo = ud.id_usuario
+            -- JOIN con USUARIOS para datos del DOCTOR (udoc)
+            LEFT JOIN usuarios udoc ON c.fk_doctor_acargo = udoc.id_usuario
             
-            -- JOIN a la tabla DOCTORES para obtener la ESPECIALIDAD
+            -- JOIN a la tabla DOCTORES (d) para obtener la ESPECIALIDAD
             LEFT JOIN doctores d ON c.fk_doctor_acargo = d.fk_usuario 
             
             ORDER BY c.numero_cama::INTEGER ASC
@@ -3167,6 +3167,7 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
 
 
 
