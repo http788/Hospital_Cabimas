@@ -2890,21 +2890,33 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
             return res.status(400).json({ msg: "Faltan datos de paciente, doctor o motivo de ingreso para ocupar la cama." });
         }
         
+        // server.js (dentro de app.put('/api/admin/camas/:id_cama', ...) )
+
+// ...
+
         // 1. Mapear ID de Usuario (Paciente) a id_paciente
         let pacienteIdEnTablaPacientes = null;
-        const pacienteResult = await pool.query('SELECT id_paciente FROM pacientes WHERE fk_usuario = $1', [fk_paciente_actual]);
-        if (pacienteResult.rows.length === 0) {
-            return res.status(400).json({ msg: "Error: ID de Paciente (usuario) no válido o no está registrado como tal." });
+        if (fk_paciente_actual) {
+            const pacienteResult = await pool.query('SELECT id_paciente FROM pacientes WHERE fk_usuario = $1', [fk_paciente_actual]);
+            if (pacienteResult.rows.length === 0) {
+                // Si la persona existe como usuario pero no como paciente:
+                return res.status(400).json({ msg: "Error de Mapeo: El ID de usuario proporcionado no está registrado en la tabla de pacientes." });
+            }
+            pacienteIdEnTablaPacientes = pacienteResult.rows[0].id_paciente;
         }
-        pacienteIdEnTablaPacientes = pacienteResult.rows[0].id_paciente;
         
         // 2. Mapear ID de Usuario (Doctor) a id_doctor
         let doctorIdEnTablaDoctores = null;
-        const doctorResult = await pool.query('SELECT id_doctor FROM doctores WHERE fk_usuario = $1', [fk_doctor_acargo]);
-        if (doctorResult.rows.length === 0) {
-            return res.status(400).json({ msg: "Error: ID de Doctor (usuario) no válido o no está registrado como tal." });
+        if (fk_doctor_acargo) {
+            const doctorResult = await pool.query('SELECT id_doctor FROM doctores WHERE fk_usuario = $1', [fk_doctor_acargo]);
+            if (doctorResult.rows.length === 0) {
+                 // Si la persona existe como usuario pero no como doctor:
+                return res.status(400).json({ msg: "Error de Mapeo: El ID de usuario proporcionado no está registrado en la tabla de doctores." });
+            }
+            doctorIdEnTablaDoctores = doctorResult.rows[0].id_doctor;
         }
-        doctorIdEnTablaDoctores = doctorResult.rows[0].id_doctor;
+
+// ...
 
         // 3. Ejecutar la actualización con los IDs mapeados
         const query = `
@@ -3156,3 +3168,4 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
