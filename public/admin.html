@@ -627,16 +627,19 @@
         
        // admin.html (Reemplaza loadSection)
 
+// admin.html (Reemplaza la función loadSection)
+
+// --- Carga de Secciones (CORREGIDA PARA ACTIVACIÓN DE MENÚ) ---
 async function loadSection(section) {
     contentArea.innerHTML = `<h1>Cargando...</h1>`;
     
-    // 🟢 CORRECCIÓN: LÓGICA DE ACTIVACIÓN DEL MENÚ 🟢
+    // 🟢 CORRECCIÓN CLAVE: LÓGICA DE ACTIVACIÓN DEL MENÚ 🟢
     document.querySelectorAll('#sidebar a').forEach(l => l.classList.remove('active'));
     
     const activeLink = document.querySelector(`#sidebar a[data-section="${section}"]`);
     if (activeLink) {
         activeLink.classList.add('active');
-        // También actualizamos el título móvil, ya que estamos recargando
+        // También actualizamos el título de la página principal y el móvil
         const sectionTitle = activeLink.innerText.trim();
         mainContentTitle.innerText = sectionTitle;
         mobileHeaderTitle.innerText = sectionTitle;
@@ -647,12 +650,19 @@ async function loadSection(section) {
         switch (section) {
             case 'metricas': await loadMetrics(); break;
             case 'doctores-pendientes': await loadPendingDoctors(); break;
-            // ... (restantes secciones) ...
+            case 'gestion-doctores': await loadDoctorManagement(); break;
+            case 'gestion-pacientes': await loadGestionPacientes(); break; 
+            case 'inventario': await loadInventory(); break;
+            case 'farmacia-solicitudes': await loadPharmacyRequests(); break;
             case 'censo-camas': await loadCensoCamas(); break;
-            case 'alertas-epidemiologicas': await loadAlertas(); break;
-            case 'censo-quirofano': await loadCensoQuirofano(); break;
-            case 'recursos-humanos': await loadRecursosHumanos(); break;
+            
+            // 🟢 NUEVAS SECCIONES IMPLEMENTADAS 🟢
+            case 'censo-quirofano': await loadCensoQuirofano(); break; // <-- Aquí recarga Quirófano
+            case 'recursos-humanos': await loadRecursosHumanos(); break; // <-- Recarga RRHH
             case 'comercio': loadComercioPlaceholder(); break;
+            // ------------------------------------
+
+            case 'alertas-epidemiologicas': await loadAlertas(); break;
             case 'configuracion': await loadConfiguracion(); break;
             default: contentArea.innerHTML = '<h1>Sección no encontrada.</h1>';
         }
@@ -661,6 +671,7 @@ async function loadSection(section) {
            contentArea.innerHTML = `<h1>⚠️ Error de Carga</h1><p>${error.message}</p><p>Verifique que su servidor Node.js y la base de datos estén funcionando correctamente.</p>`;
         }
     }
+}    }
 }        
         // --- 1. MÉTRICAS CLAVE ---
         async function loadMetrics() {
