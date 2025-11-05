@@ -1431,6 +1431,8 @@
         
         // admin.html
 
+       // (Esto está en admin.html)
+
         async function handleCamaFormSubmit(id_cama) {
             const nuevoEstado = document.getElementById('cama-accion').value;
             if (!nuevoEstado) return showToast('Debe seleccionar una acción.', 'error');
@@ -1439,16 +1441,18 @@
             let fk_doctor_id = null;
             let motivo_ingreso = '';
 
-            // --- INICIO DEL BLOQUE CRÍTICO: try...catch para toda la lógica de búsqueda ---
             try {
                 if (nuevoEstado === 'Ocupada') {
+                    
+                    // --- CORRECCIÓN: REINTRODUCIDAS LAS CÉDULAS DEL FORMULARIO ---
                     const cedulaPac = document.getElementById('cama-paciente-cedula').value.trim();
                     const cedulaDoc = document.getElementById('cama-doctor-cedula').value.trim();
-                    
+                    // --- FIN CORRECCIÓN ---
+
                     if (!cedulaPac || !cedulaDoc) {
                         return showToast('Error: Cédula de paciente y doctor son requeridas para ocupar la cama.', 'error');
                     }
-
+                    
                     // 1. Buscar Paciente por Cédula (Retorna id_usuario)
                     const pac = await apiFetch(`/pacientes/buscar-id?cedula=${cedulaPac}`);
                     if (!pac || !pac.id_usuario || pac.nombre_rol !== 'Paciente') {
@@ -1476,11 +1480,11 @@
                 closeModal();
 
             } catch (error) {
-                // 5. Capturar fallos de red o errores de la API (ej. 404/400 del buscar-id)
+                // 5. Capturar fallos de red o errores de la API
                 showToast(`Error al buscar usuario: ${error.message}`, 'error');
             }
-            // --- FIN DEL BLOQUE CRÍTICO ---
-        }        
+        }
+                }        
         // --- 8. ALERTAS EPIDEMIOLÓGICAS ---
         async function loadAlertas() {
             contentArea.innerHTML = `
