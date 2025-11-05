@@ -430,23 +430,25 @@
 
     <div id="admin-wrapper">
         <div id="sidebar">
-            <h2>ADMIN HOSPITAL</h2>
-            <a href="#" data-section="metricas" class="active"><i class="fas fa-chart-line"></i> Métricas Clave</a>
-            <a href="#" data-section="doctores-pendientes"><i class="fas fa-user-clock"></i> Activación Doctores</a>
-            <a href="#" data-section="gestion-doctores"><i class="fas fa-user-md"></i> Gestión de Doctores</a>
-            <a href="#" data-section="gestion-pacientes"><i class="fas fa-users"></i> Gestión de Pacientes</a>
-            <a href="#" data-section="inventario"><i class="fas fa-boxes"></i> Inventario</a>
-            <a href="#" data-section="farmacia-solicitudes"><i class="fas fa-prescription-bottle"></i> Solicitudes Farmacia</a>
-            <a href="#" data-section="censo-camas"><i class="fas fa-bed"></i> Censo de Camas</a>
-            <a href="#" data-section="alertas-epidemiologicas"><i class="fas fa-biohazard"></i> Alertas</a>
-            
-            <hr style="border-color: rgba(255, 255, 255, 0.2); margin: 20px 0;">
-            
-            <a href="#" data-section="configuracion"><i class="fas fa-cog"></i> Configuración</a>
-            
-            <a href="#" onclick="logout()" class="logout-menu-item"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
-        </div>
-
+    <h2>ADMIN HOSPITAL</h2>
+    <a href="#" data-section="metricas" class="active"><i class="fas fa-chart-line"></i> Métricas Clave</a>
+    <a href="#" data-section="doctores-pendientes"><i class="fas fa-user-clock"></i> Activación Doctores</a>
+    <a href="#" data-section="gestion-doctores"><i class="fas fa-user-md"></i> Gestión de Doctores</a>
+    <a href="#" data-section="gestion-pacientes"><i class="fas fa-users"></i> Gestión de Pacientes</a>
+    <a href="#" data-section="inventario"><i class="fas fa-boxes"></i> Inventario</a>
+    <a href="#" data-section="farmacia-solicitudes"><i class="fas fa-prescription-bottle"></i> Solicitudes Farmacia</a>
+    <a href="#" data-section="censo-camas"><i class="fas fa-bed"></i> Censo de Camas</a>
+    <a href="#" data-section="censo-quirofano"><i class="fas fa-hospital-user"></i> Censo Quirófano</a>
+    <a href="#" data-section="recursos-humanos"><i class="fas fa-people-carry-box"></i> Recursos Humanos</a>
+    <a href="#" data-section="comercio"><i class="fas fa-store"></i> Comercio</a>
+    <a href="#" data-section="alertas-epidemiologicas"><i class="fas fa-biohazard"></i> Alertas</a>
+    
+    <hr style="border-color: rgba(255, 255, 255, 0.2); margin: 20px 0;">
+    
+    <a href="#" data-section="configuracion"><i class="fas fa-cog"></i> Configuración</a>
+    
+    <a href="#" onclick="logout()" class="logout-menu-item"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+</div>
         <div id="main-content">
             <h1 id="main-content-title">Métricas Clave</h1>
             <div id="content-area">
@@ -636,6 +638,11 @@
                     case 'farmacia-solicitudes': await loadPharmacyRequests(); break;
                     case 'censo-camas': await loadCensoCamas(); break;
                     case 'alertas-epidemiologicas': await loadAlertas(); break;
+                    // 🟢 NUEVAS SECCIONES AGREGADAS 🟢
+            case 'censo-quirofano': await loadCensoQuirofano(); break;
+            case 'recursos-humanos': await loadRecursosHumanos(); break;
+            case 'comercio': loadComercioPlaceholder(); break; // No requiere 'await'
+            // 🟢 FIN NUEVAS SECCIONES 🟢
                     case 'configuracion': await loadConfiguracion(); break;
                     default: contentArea.innerHTML = '<h1>Sección no encontrada.</h1>';
                 }
@@ -1571,6 +1578,233 @@
                 }
             });
         }
+
+
+
+// admin.html (Al final del bloque <script>)
+// ...
+// --- 7.X CENSO DE QUIRÓFANO (Reutiliza loadCensoCamas) ---
+async function loadCensoQuirofano() {
+    // Usamos el mismo motor de censo, pero limitando a 7 camas
+    const totalCamasQuirofano = 7;
+    const camas = await apiFetch(`/camas/quirofano`); 
+
+    let censoHTML = `<h1><i class="fas fa-hospital-user"></i> Censo de Quirófano (7 Camas)</h1>`;
+    censoHTML += `<p>Gestión de las ${totalCamasQuirofano} camas de recuperación en el área de quirófano.</p>`;
+    censoHTML += `<div id="censo-grid-quirofano" class="censo-grid">`;
+    
+    camas.forEach(cama => {
+        // Lógica de visualización idéntica a la de loadCensoCamas
+        let className = `cama-${cama.estado.replace(' ', '')}`; 
+        let details = '';
+        const camaData = JSON.stringify(cama);
+        
+        if (cama.estado === 'Ocupada') {
+            details = `OCUPADA POR:\nPaciente: ${cama.paciente_nombre || 'N/A'} ${cama.paciente_apellido || ''} (CI: ${cama.paciente_cedula || 'N/A'})\nDoctor: ${cama.doctor_nombre || 'N/A'} ${cama.doctor_apellido || ''}\nMotivo: ${cama.motivo_ingreso || 'N/R'}`;
+        } else if (cama.estado === 'Limpieza') {
+            className = 'cama-Limpieza';
+            details = `Requiere Limpieza. Ubicación: ${cama.ubicacion}`;
+        } else {
+            className = 'cama-Libre';
+            details = `Cama Disponible. Ubicación: ${cama.ubicacion}`;
+        }
+        
+        censoHTML += `
+            <div class="cama-item ${className}" 
+                 title="${details}" 
+                 onclick='handleCamaClick(${camaData})'> <strong>Q. Cama ${cama.numero_cama}</strong>
+                <p>${cama.estado}</p>
+            </div>
+        `;
+    });
+    censoHTML += `</div>`;
+    contentArea.innerHTML = censoHTML;
+}
+
+
+// --- 8. RECURSOS HUMANOS ---
+async function loadRecursosHumanos() {
+    // Esta función solo cargará el formulario de registro por ahora
+    const personal = await apiFetch(`/recursos-humanos`);
+
+    let html = `
+        <h1><i class="fas fa-people-carry-box"></i> Gestión de Recursos Humanos</h1>
+        <div class="form-container" style="max-width: 800px;">
+            <h2>Registrar Nuevo Personal</h2>
+            <form id="rrhh-form">
+                <div class="form-grid">
+                    <div>
+                        <label for="rrhh-nombre">Nombre:</label>
+                        <input type="text" id="rrhh-nombre" required>
+                    </div>
+                    <div>
+                        <label for="rrhh-apellido">Apellido:</label>
+                        <input type="text" id="rrhh-apellido" required>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div>
+                        <label for="rrhh-cedula">Cédula:</label>
+                        <input type="text" id="rrhh-cedula" placeholder="Ej: V12345678" required>
+                    </div>
+                    <div>
+                        <label for="rrhh-telefono">Teléfono:</label>
+                        <input type="text" id="rrhh-telefono" placeholder="Ej: 04121234567">
+                    </div>
+                </div>
+                <label for="rrhh-email">Correo Electrónico:</label>
+                <input type="email" id="rrhh-email" placeholder="personal@hospital.com">
+                
+                <div class="form-grid">
+                    <div>
+                        <label for="rrhh-cargo">Cargo/Rol:</label>
+                        <select id="rrhh-cargo" required>
+                            <option value="Enfermera">Enfermera</option>
+                            <option value="Obrero">Obrero</option>
+                            <option value="Administrativo">Administrativo</option>
+                            <option value="Técnico">Técnico</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="rrhh-horario">Horario de Turno:</label>
+                        <input type="text" id="rrhh-horario" placeholder="Ej: 7am - 3pm (L-V)" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-principal" style="margin-top: 15px;">
+                    <i class="fas fa-user-plus"></i> Registrar Persona
+                </button>
+            </form>
+        </div>
+        
+        <div id="rrhh-list-area" style="margin-top: 30px;">
+            <h2>Personal Registrado (${personal.length})</h2>
+            ${renderRrhhTable(personal)}
+        </div>
+    `;
+    contentArea.innerHTML = html;
+    document.getElementById('rrhh-form').addEventListener('submit', handleAddRrhh);
+}
+
+function renderRrhhTable(personal) {
+     if (personal.length === 0) {
+        return '<table><tbody><tr><td class="empty-table">No hay personal registrado en este momento.</td></tr></tbody></table>';
+    }
+    
+    let tableHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Cédula</th>
+                    <th>Nombre</th>
+                    <th>Cargo</th>
+                    <th>Teléfono/Email</th>
+                    <th>Horario</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    personal.forEach(p => {
+        tableHTML += `
+            <tr>
+                <td data-label="Cédula">${p.cedula}</td>
+                <td data-label="Nombre">${p.nombre} ${p.apellido}</td>
+                <td data-label="Cargo">${p.cargo}</td>
+                <td data-label="Contacto">${p.telefono || 'N/R'} / ${p.email || 'N/R'}</td>
+                <td data-label="Horario">${p.horario}</td>
+                <td data-label="Acción">
+                    <button class="btn-rojo btn-rojo-small" onclick="handleDeleteRrhh(${p.id_personal})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += `</tbody></table>`;
+    return tableHTML;
+}
+
+async function handleAddRrhh(e) {
+    e.preventDefault();
+    const data = {
+        nombre: document.getElementById('rrhh-nombre').value,
+        apellido: document.getElementById('rrhh-apellido').value,
+        cedula: document.getElementById('rrhh-cedula').value,
+        telefono: document.getElementById('rrhh-telefono').value,
+        email: document.getElementById('rrhh-email').value,
+        cargo: document.getElementById('rrhh-cargo').value,
+        horario: document.getElementById('rrhh-horario').value,
+    };
+    
+    try {
+        await apiFetch(`/recursos-humanos`, { method: 'POST', body: JSON.stringify(data) });
+        showToast('Personal registrado con éxito.', 'success');
+        document.getElementById('rrhh-form').reset();
+        loadRecursosHumanos(); // Recargar lista
+    } catch (error) {
+        showToast(`Error al registrar: ${error.message}`, 'error');
+    }
+}
+
+async function handleDeleteRrhh(id_personal) {
+     openConfirmModal('Confirmar Eliminación', `¿Está seguro de eliminar a este miembro del personal?`, async () => {
+        try {
+            await apiFetch(`/recursos-humanos/${id_personal}`, { method: 'DELETE' });
+            showToast('Personal eliminado.', 'success');
+            loadRecursosHumanos(); 
+        } catch (error) {
+            showToast(`Error al eliminar: ${error.message}`, 'error');
+        }
+    });
+}
+
+// --- 9. COMERCIO (MARCADOR DE POSICIÓN) ---
+function loadComercioPlaceholder() {
+    contentArea.innerHTML = `
+        <h1><i class="fas fa-store"></i> Módulo de Comercio / Proveedores</h1>
+        <div class="form-container" style="max-width: 600px; text-align: center;">
+            <h2>Integración Futura</h2>
+            <p style="font-size: 1.1em; color: var(--color-principal);">
+                Esta funcionalidad se integrará más adelante.
+            </p>
+            <p>Aquí se gestionarán las relaciones con proveedores, la facturación, órdenes de compra y el sistema de pago.</p>
+            <i class="fas fa-tools" style="font-size: 3em; color: var(--color-acento); margin-top: 20px;"></i>
+        </div>
+    `;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         // --- 9. CONFIGURACIÓN ---
         async function loadConfiguracion() {
