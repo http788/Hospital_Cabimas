@@ -123,62 +123,59 @@ pool.connect((err, client, release) => {
 // ==============================================================================
 // CÓDIGO CRÍTICO TEMPORAL: GENERADOR DE 140 CAMAS INICIALES
 // ==============================================================================
+// server.js (Reemplaza la función initializeCamas con este código completo)
+
 async function initializeCamas() {
+    // Definición de las constantes del hospital
     const totalCamas = 140;
-    const totalCamasQuirofano = 7; // 🟢 NUEVO
+    const totalCamasQuirofano = 7; 
     let successCount = 0;
     const ubicacion = 'Piso 1 - Sala General'; 
-    const ubicacionQuirofano = 'Piso 2 - Recuperación Quirúrgica'; // 🟢 NUEVA UBICACIÓN
+    const ubicacionQuirofano = 'Piso 2 - Recuperación Quirúrgica'; 
 
-    // Verificar si ya existen 140 camas o más
-    const existingCamas = await pool.query('SELECT COUNT(*) FROM camas');
-    if (parseInt(existingCamas.rows[0].count) >= totalCamas) {
-        console.log(`\n🛏️ [CENSO DE CAMAS]: Ya existen ${existingCamas.rows[0].count} camas. No se generarán nuevas.`);
-        return;
-    }
-
-    console.log(`\n🛏️ [CENSO DE CAMAS]: Generando ${totalCamas} camas iniciales...`);
-
-    for (let i = 1; i <= totalCamas; i++) {
-        try {
-            await pool.query(
-                // IMPORTANTE: Asegúrate de que numero_cama sea UNIQUE en tu tabla SQL
-                `INSERT INTO camas (numero_cama, estado, ubicacion) 
-                 VALUES ($1, 'Libre', $2) 
-                 ON CONFLICT (numero_cama) DO NOTHING;`, 
-                [i, ubicacion]
-            );
-            successCount++;
-        } catch (error) {
-             // Puedes dejarlo vacío o comentar si no quieres ver errores menores.
+    try {
+        const existingCamas = await pool.query('SELECT COUNT(*) FROM camas');
+        
+        // Verificación combinada de todas las camas
+        if (parseInt(existingCamas.rows[0].count) >= (totalCamas + totalCamasQuirofano)) { 
+            console.log(`\n🛏️ [CENSO DE CAMAS]: Ya existen ${existingCamas.rows[0].count} camas. No se generarán nuevas.`);
+            return;
         }
-    }
-    
-    if (successCount > 0) {
-        console.log(`✅ [CENSO DE CAMAS]: ${successCount} camas iniciales (1-${totalCamas}) creadas con éxito. ¡YA PUEDE VER EL CENSO!`);
-    }
-}
 
-
-// 🟢 NUEVA LÓGICA: GENERAR CAMAS DE QUIRÓFANO 🟢
-    console.log(`\n🔪 [CENSO DE QUIRÓFANO]: Generando ${totalCamasQuirofano} camas de quirófano (Q1-Q7)...`);
-    for (let i = 1; i <= totalCamasQuirofano; i++) {
-        try {
-            // Se usa un prefijo "Q" + Número para que no haya conflicto con las 140 camas
+        // 1. Lógica de generación de 140 camas generales (Si faltan)
+        console.log(`\n🛏️ [CENSO DE CAMAS]: Generando ${totalCamas} camas generales (1-140)...`);
+        for (let i = 1; i <= totalCamas; i++) {
             await pool.query(
                 `INSERT INTO camas (numero_cama, estado, ubicacion) 
                  VALUES ($1, 'Libre', $2) 
                  ON CONFLICT (numero_cama) DO NOTHING;`, 
-                [`Q${i}`, ubicacionQuirofano] // Número de cama: Q1, Q2, etc.
+                [i.toString(), ubicacion]
             );
-            successCount++;
-        } catch (error) {
-             console.error('Error al insertar cama de quirófano:', error.message);
         }
-    }
-    
-    if (successCount > 0) {
-        console.log(`✅ [CENSO DE CAMAS]: ${successCount} camas iniciales creadas con éxito.`);
+        
+        // 2. LÓGICA PARA GENERAR CAMAS DE QUIRÓFANO (Q1-Q7)
+        console.log(`\n🔪 [CENSO DE QUIRÓFANO]: Generando ${totalCamasQuirofano} camas de quirófano (Q1-Q7)...`);
+        for (let i = 1; i <= totalCamasQuirofano; i++) {
+            try {
+                // Se usa un prefijo "Q" + Número para que no haya conflicto con las 140 camas
+                await pool.query(
+                    `INSERT INTO camas (numero_cama, estado, ubicacion) 
+                     VALUES ($1, 'Libre', $2) 
+                     ON CONFLICT (numero_cama) DO NOTHING;`, 
+                    [`Q${i}`, ubicacionQuirofano] // Número de cama: Q1, Q2, etc.
+                );
+                successCount++;
+            } catch (error) {
+                 console.error('Error al insertar cama de quirófano:', error.message);
+            }
+        }
+        
+        if (successCount > 0) {
+            console.log(`✅ [CENSO DE CAMAS]: Se inicializaron las camas de quirófano correctamente.`);
+        }
+
+    } catch (err) {
+        console.error('Error FATAL al inicializar camas:', err.message);
     }
 }
 initializeCamas();
@@ -3274,6 +3271,7 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
 
 
 
