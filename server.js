@@ -2825,26 +2825,39 @@ app.get('/api/admin/pacientes/buscar-id', auth(['Administrador']), async (req, r
 });
 
 
-// 2. RUTA: GET /api/admin/camas (Obtener Censo Completo con detalles de Paciente y Doctor)
+// server.js (dentro de app.get('/api/admin/camas', ...) )
+
 app.get('/api/admin/camas', auth(['Administrador']), async (req, res) => {
     try {
         const camas = await pool.query(`
             SELECT
                 c.*, -- Selecciona todos los campos de camas
+                
+                -- Datos del PACIENTE (Unión directa a USUARIOS)
                 up.nombre AS paciente_nombre,
                 up.apellido AS paciente_apellido,
                 up.cedula AS paciente_cedula,
                 c.motivo_ingreso,
-                c.fecha_ingreso, -- <-- AÑADIDO
-                d.especialidad AS doctor_especialidad,
+                c.fecha_ingreso,
+                
+                -- Datos del DOCTOR (Unión directa a USUARIOS)
                 ud.nombre AS doctor_nombre,
                 ud.apellido AS doctor_apellido,
-                ud.cedula AS doctor_cedula -- <-- AÑADIDO
+                ud.cedula AS doctor_cedula,
+                
+                -- Necesitamos la especialidad, la obtenemos haciendo un JOIN extra a doctores
+                d.especialidad AS doctor_especialidad
             FROM camas c
-            LEFT JOIN pacientes p ON c.fk_paciente_actual = p.id_paciente
-            LEFT JOIN usuarios up ON p.fk_usuario = up.id_usuario 
-            LEFT JOIN doctores d ON c.fk_doctor_acargo = d.id_doctor
-            LEFT JOIN usuarios ud ON d.fk_usuario = ud.id_usuario 
+            
+            -- JOIN con USUARIOS para datos del PACIENTE
+            LEFT JOIN usuarios up ON c.fk_paciente_actual = up.id_usuario 
+            
+            -- JOIN con USUARIOS para datos del DOCTOR
+            LEFT JOIN usuarios ud ON c.fk_doctor_acargo = ud.id_usuario
+            
+            -- JOIN a la tabla DOCTORES para obtener la ESPECIALIDAD
+            LEFT JOIN doctores d ON c.fk_doctor_acargo = d.fk_usuario 
+            
             ORDER BY c.numero_cama::INTEGER ASC
         `);
         res.json(camas.rows);
@@ -3154,6 +3167,7 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
 
 
 
