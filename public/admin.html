@@ -1622,13 +1622,18 @@ async function loadCensoQuirofano() {
 }
 
 
-// --- 8. RECURSOS HUMANOS ---
-async function loadRecursosHumanos() {
-    // Esta función solo cargará el formulario de registro por ahora
-    const personal = await apiFetch(`/recursos-humanos`);
+// admin.html
 
-    let html = `
+// --- 8. RECURSOS HUMANOS (MODIFICADO: CON BÚSQUEDA) ---
+async function loadRecursosHumanos() {
+    contentArea.innerHTML = `
         <h1><i class="fas fa-people-carry-box"></i> Gestión de Recursos Humanos</h1>
+        
+        <div class="form-container" style="max-width: 100%;">
+            <input type="text" id="rrhh-search" placeholder="Buscar por Cédula, Nombre o Cargo..." style="width: 300px; display: inline-block;">
+            <button class="btn-principal" onclick="fetchRrhhList()">Buscar</button>
+        </div>
+
         <div class="form-container" style="max-width: 800px;">
             <h2>Registrar Nuevo Personal</h2>
             <form id="rrhh-form">
@@ -1678,13 +1683,28 @@ async function loadRecursosHumanos() {
         </div>
         
         <div id="rrhh-list-area" style="margin-top: 30px;">
-            <h2>Personal Registrado (${personal.length})</h2>
-            ${renderRrhhTable(personal)}
+            <h2>Personal Registrado (Cargando...)</h2>
         </div>
     `;
-    contentArea.innerHTML = html;
     document.getElementById('rrhh-form').addEventListener('submit', handleAddRrhh);
+    fetchRrhhList(); // Cargar la lista al inicio
 }
+
+// NUEVA FUNCIÓN: Fetch de personal (soporta búsqueda)
+async function fetchRrhhList() {
+    const searchInput = document.getElementById('rrhh-search');
+    const search = searchInput ? searchInput.value.trim() : '';
+    const listArea = document.getElementById('rrhh-list-area');
+    listArea.innerHTML = '<h2>Personal Registrado (Cargando...)</h2><p>Cargando lista...</p>';
+    
+    try {
+        const personal = await apiFetch(`/recursos-humanos?search=${encodeURIComponent(search)}`);
+        listArea.innerHTML = `<h2>Personal Registrado (${personal.length})</h2>${renderRrhhTable(personal)}`;
+    } catch (error) {
+         listArea.innerHTML = `<p style="color:red;">Error al cargar personal: ${error.message}</p>`;
+    }
+}
+// admin.html
 
 function renderRrhhTable(personal) {
      if (personal.length === 0) {
@@ -1707,6 +1727,8 @@ function renderRrhhTable(personal) {
     `;
     
     personal.forEach(p => {
+        // Escapar JSON para pasar el objeto al HTML
+        const pData = JSON.stringify(p).replace(/"/g, '&quot;'); 
         tableHTML += `
             <tr>
                 <td data-label="Cédula">${p.cedula}</td>
@@ -1715,6 +1737,9 @@ function renderRrhhTable(personal) {
                 <td data-label="Contacto">${p.telefono || 'N/R'} / ${p.email || 'N/R'}</td>
                 <td data-label="Horario">${p.horario}</td>
                 <td data-label="Acción">
+                    <button class="btn-principal btn-principal-small" onclick='showEditRrhhForm(${pData})'>
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
                     <button class="btn-rojo btn-rojo-small" onclick="handleDeleteRrhh(${p.id_personal})">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -1743,7 +1768,7 @@ async function handleAddRrhh(e) {
         await apiFetch(`/recursos-humanos`, { method: 'POST', body: JSON.stringify(data) });
         showToast('Personal registrado con éxito.', 'success');
         document.getElementById('rrhh-form').reset();
-        loadRecursosHumanos(); // Recargar lista
+        fetchRrhhList(); // Recargar lista con la nueva persona
     } catch (error) {
         showToast(`Error al registrar: ${error.message}`, 'error');
     }
@@ -1754,13 +1779,73 @@ async function handleDeleteRrhh(id_personal) {
         try {
             await apiFetch(`/recursos-humanos/${id_personal}`, { method: 'DELETE' });
             showToast('Personal eliminado.', 'success');
-            loadRecursosHumanos(); 
+            fetchRrhhList(); 
         } catch (error) {
             showToast(`Error al eliminar: ${error.message}`, 'error');
         }
     });
 }
 
+// 🟢 FUNCIONES DE EDICIÓN (NUEVAS) 🟢
+function showEditRrhhForm(person) {
+    const formHtml = `
+        <form id="edit-rrhh-form" class="form-container" style="box-shadow: none; padding: 0;">
+            <input type="hidden" id="edit-rrhh-id" value="${person.id_personal}">
+            <p>Editando a: <strong>${person.nombre} ${person.apellido} (CI: ${person.cedula})</strong></p>
+            <hr>
+            <div class="form-grid">
+                <div>
+                    <label for="edit-rrhh-telefono">Teléfono:</label>
+                    <input type="text" id="edit-rrhh-telefono" value="${person.telefono || ''}" placeholder="Ej: 04121234567">
+                </div>
+                <div>
+                    <label for="edit-rrhh-email">Correo Electrónico:</label>
+                    <input type="email" id="edit-rrhh-email" value="${person.email || ''}" placeholder="personal@hospital.com">
+                </div>
+            </div>
+            <div class="form-grid">
+                <div>
+                    <label for="edit-rrhh-cargo">Cargo/Rol:</label>
+                    <select id="edit-rrhh-cargo" required>
+                        <option value="Enfermera" ${person.cargo === 'Enfermera' ? 'selected' : ''}>Enfermera</option>
+                        <option value="Obrero" ${person.cargo === 'Obrero' ? 'selected' : ''}>Obrero</option>
+                        <option value="Administrativo" ${person.cargo === 'Administrativo' ? 'selected' : ''}>Administrativo</option>
+                        <option value="Técnico" ${person.cargo === 'Técnico' ? 'selected' : ''}>Técnico</option>
+                        <option value="Otro" ${person.cargo === 'Otro' ? 'selected' : ''}>Otro</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="edit-rrhh-horario">Horario de Turno:</label>
+                    <input type="text" id="edit-rrhh-horario" value="${person.horario}" required placeholder="Ej: 7am - 3pm (L-V)">
+                </div>
+            </div>
+        </form>
+    `;
+    openFormModal(`Editar Personal: ${person.nombre}`, formHtml, () => handleUpdateRrhh());
+    modalBtnConfirm.innerText = 'Guardar Cambios';
+}
+
+async function handleUpdateRrhh() {
+    const id_personal = document.getElementById('edit-rrhh-id').value;
+    const data = {
+        telefono: document.getElementById('edit-rrhh-telefono').value,
+        email: document.getElementById('edit-rrhh-email').value,
+        cargo: document.getElementById('edit-rrhh-cargo').value,
+        horario: document.getElementById('edit-rrhh-horario').value,
+    };
+    
+    try {
+        await apiFetch(`/recursos-humanos/${id_personal}`, { 
+            method: 'PUT', 
+            body: JSON.stringify(data) 
+        });
+        showToast('Personal actualizado con éxito.', 'success');
+        closeModal();
+        fetchRrhhList(); // Recargar lista
+    } catch (error) {
+        showToast(`Error al actualizar: ${error.message}`, 'error');
+    }
+}
 // --- 9. COMERCIO (MARCADOR DE POSICIÓN) ---
 function loadComercioPlaceholder() {
     contentArea.innerHTML = `
