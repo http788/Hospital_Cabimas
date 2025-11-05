@@ -2845,7 +2845,7 @@ app.get('/api/admin/pacientes/buscar-id', auth(['Administrador']), async (req, r
 });
 
 
-// server.js (dentro de app.get('/api/admin/camas', ...) )
+// server.js (Reemplaza el bloque app.get('/api/admin/camas', ...))
 
 app.get('/api/admin/camas', auth(['Administrador']), async (req, res) => {
     try {
@@ -2878,11 +2878,15 @@ app.get('/api/admin/camas', auth(['Administrador']), async (req, res) => {
             -- JOIN a la tabla DOCTORES para obtener la ESPECIALIDAD
             LEFT JOIN doctores d ON c.fk_doctor_acargo = d.fk_usuario 
             
-            ORDER BY c.numero_cama::INTEGER ASC
+            -- 🟢 CORRECCIÓN CRÍTICA: EXCLUIR CAMAS 'Q' ANTES DE CONVERTIR A ENTERO
+            WHERE c.numero_cama NOT LIKE 'Q%' 
+            
+            -- 🟢 CORRECCIÓN FINAL: Ordenar de forma segura por valor numérico
+            ORDER BY CAST(c.numero_cama AS INTEGER) ASC
         `);
         res.json(camas.rows);
     } catch (err) {
-        console.error('Error al obtener censo de camas:', err.message);
+        console.error('Error al obtener censo de camas generales:', err.message);
         res.status(500).send('Error del servidor al cargar el censo.');
     }
 });
