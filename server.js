@@ -2856,19 +2856,22 @@ app.get('/api/admin/camas', auth(['Administrador']), async (req, res) => {
 
 // server.js
 
+// server.js
+
 // 3. RUTA: PUT /api/admin/camas/:id_cama (Actualizar Estado, Ocupar, Liberar)
 app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) => {
     const { id_cama } = req.params;
+    // Estos son los IDs de usuario (fk_usuario) que el cliente encontró con la Cédula:
     const { estado, fk_paciente_actual, motivo_ingreso, fk_doctor_acargo } = req.body; 
 
     if (!estado) {
         return res.status(400).json({ msg: "El nuevo estado de la cama es requerido." });
     }
     
-    // --- INICIO DE CORRECCIÓN A PRUEBA DE FALLOS ---
+    // --- INICIO DEL BLOQUE CRÍTICO: try...catch que debe envolver todo ---
     try {
         
-        // Lógica de Liberación/Limpieza (Estado: Limpieza, Disponible, Mantenimiento)
+        // Lógica de Liberación/Limpieza
         if (estado !== 'Ocupada') {
             await pool.query(
                 `UPDATE camas SET 
@@ -2890,35 +2893,23 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
             return res.status(400).json({ msg: "Faltan datos de paciente, doctor o motivo de ingreso para ocupar la cama." });
         }
         
-        // server.js (dentro de app.put('/api/admin/camas/:id_cama', ...) )
-
-// ...
-
-        // 1. Mapear ID de Usuario (Paciente) a id_paciente
+        // 1. Mapear ID de Usuario (fk_usuario) a id_paciente (ID interno)
         let pacienteIdEnTablaPacientes = null;
-        if (fk_paciente_actual) {
-            const pacienteResult = await pool.query('SELECT id_paciente FROM pacientes WHERE fk_usuario = $1', [fk_paciente_actual]);
-            if (pacienteResult.rows.length === 0) {
-                // Si la persona existe como usuario pero no como paciente:
-                return res.status(400).json({ msg: "Error de Mapeo: El ID de usuario proporcionado no está registrado en la tabla de pacientes." });
-            }
-            pacienteIdEnTablaPacientes = pacienteResult.rows[0].id_paciente;
+        const pacienteResult = await pool.query('SELECT id_paciente FROM pacientes WHERE fk_usuario = $1', [fk_paciente_actual]);
+        if (pacienteResult.rows.length === 0) {
+            return res.status(400).json({ msg: `Error de Mapeo: El paciente con ID de usuario ${fk_paciente_actual} no está registrado en la tabla de pacientes.` });
         }
+        pacienteIdEnTablaPacientes = pacienteResult.rows[0].id_paciente;
         
-        // 2. Mapear ID de Usuario (Doctor) a id_doctor
+        // 2. Mapear ID de Usuario (fk_usuario) a id_doctor (ID interno)
         let doctorIdEnTablaDoctores = null;
-        if (fk_doctor_acargo) {
-            const doctorResult = await pool.query('SELECT id_doctor FROM doctores WHERE fk_usuario = $1', [fk_doctor_acargo]);
-            if (doctorResult.rows.length === 0) {
-                 // Si la persona existe como usuario pero no como doctor:
-                return res.status(400).json({ msg: "Error de Mapeo: El ID de usuario proporcionado no está registrado en la tabla de doctores." });
-            }
-            doctorIdEnTablaDoctores = doctorResult.rows[0].id_doctor;
+        const doctorResult = await pool.query('SELECT id_doctor FROM doctores WHERE fk_usuario = $1', [fk_doctor_acargo]);
+        if (doctorResult.rows.length === 0) {
+            return res.status(400).json({ msg: `Error de Mapeo: El doctor con ID de usuario ${fk_doctor_acargo} no está registrado en la tabla de doctores.` });
         }
+        doctorIdEnTablaDoctores = doctorResult.rows[0].id_doctor;
 
-// ...
-
-        // 3. Ejecutar la actualización con los IDs mapeados
+        // 3. Ejecutar la actualización con los IDs mapeados (id_paciente, id_doctor)
         const query = `
             UPDATE camas 
             SET estado = $1, 
@@ -2930,7 +2921,13 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
             RETURNING *;
         `;
         
-        const result = await pool.query(query, [estado, pacienteIdEnTablaPacientes, motivo_ingreso, doctorIdEnTablaDoctores, id_cama]); 
+        const result = await pool.query(query, [
+            estado, 
+            pacienteIdEnTablaPacientes, // <-- Usamos el ID interno
+            motivo_ingreso, 
+            doctorIdEnTablaDoctores, // <-- Usamos el ID interno
+            id_cama
+        ]); 
 
         if (result.rows.length === 0) {
             return res.status(404).json({ msg: "Cama no encontrada." });
@@ -2939,16 +2936,11 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
         res.json({ msg: "Cama actualizada exitosamente", cama: result.rows[0] });
 
     } catch (error) {
-        // Este catch debería manejar CUALQUIER error de la DB y responder en JSON
-        console.error('Error catastrófico al actualizar cama:', error.message, error.stack);
-        // Si el error es una violación de restricción (NOT NULL), la DB lanza el error aquí.
-        res.status(500).json({ msg: "Error interno del servidor. Posible restricción de la base de datos no cumplida." });
+        // ESTO DEBE CAPTURAR CUALQUIER FALLO DEL SERVIDOR Y DEVOLVER JSON.
+        console.error('Error FATAL al actualizar cama:', error.message, error.stack);
+        res.status(500).json({ msg: "Error interno FATAL del servidor. Revise si los datos de la DB son correctos." });
     }
 });
- 
- 
- 
- 
  
  
  
@@ -3168,4 +3160,5 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
 
