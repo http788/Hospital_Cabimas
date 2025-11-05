@@ -1919,7 +1919,19 @@ function loadComercioPlaceholder() {
 
 
 
+// admin.html (Añade esta función en tu bloque <script>)
 
+/**
+ * Muestra u oculta los campos de cédula y motivo al cambiar la acción en el modal.
+ * @param {string} value - El valor seleccionado ('Ocupada' o 'Libre').
+ */
+function toggleCamaForm(value) {
+    const detalleDiv = document.getElementById('cama-ocupar-detalle');
+    if (detalleDiv) {
+        // Si el valor es 'Ocupada', muestra el div; de lo contrario, lo oculta.
+        detalleDiv.style.display = (value === 'Ocupada') ? 'block' : 'none';
+    }
+}
 
 
 
