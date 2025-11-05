@@ -3133,11 +3133,13 @@ app.put('/api/admin/actualizar-usuario', auth(['Administrador']), async (req, re
 
 // server.js (en la sección de rutas /api/admin)
 
+// server.js (en la sección de rutas /api/admin)
+
 // ------------------------------------------------------------------------------
 // 8. RECURSOS HUMANOS (CRUD BÁSICO)
 // ------------------------------------------------------------------------------
 
-// RUTA: POST /api/admin/recursos-humanos
+// RUTA: POST /api/admin/recursos-humanos (Crear Personal)
 app.post('/api/admin/recursos-humanos', auth(['Administrador']), async (req, res) => {
     const { nombre, apellido, cedula, telefono, email, cargo, horario } = req.body;
     if (!nombre || !apellido || !cedula || !cargo || !horario) {
@@ -3151,19 +3153,37 @@ app.post('/api/admin/recursos-humanos', auth(['Administrador']), async (req, res
         );
         res.status(201).json({ msg: 'Personal registrado con éxito.' });
     } catch (err) {
+        // Error 23505 es por clave única (cédula duplicada)
+        if (err.code === '23505') { 
+            return res.status(409).json({ msg: 'La cédula ya está registrada en el personal.' });
+        }
         console.error('Error al agregar personal:', err.message);
         res.status(500).json({ msg: 'Error del servidor al agregar personal.' });
     }
 });
 
-// RUTA: GET /api/admin/recursos-humanos
+// RUTA: GET /api/admin/recursos-humanos (Obtener/Buscar Personal)
 app.get('/api/admin/recursos-humanos', auth(['Administrador']), async (req, res) => {
+    const { search } = req.query; // Captura el parámetro 'search' de la URL
+    let queryText = `
+        SELECT id_personal, nombre, apellido, cedula, telefono, email, cargo, horario
+        FROM personal_rrhh
+    `;
+    let queryParams = [];
+    
+    // 🟢 LÓGICA DE BÚSQUEDA POR CÉDULA, NOMBRE O CARGO 🟢
+    if (search) {
+        // $1 se usará para el parámetro de búsqueda
+        queryParams.push(`%${search}%`);
+        queryText += ` 
+            WHERE nombre ILIKE $1 OR apellido ILIKE $1 OR cedula ILIKE $1 OR cargo ILIKE $1
+        `;
+    }
+    
+    queryText += ` ORDER BY cargo, apellido`;
+    
     try {
-        const personal = await pool.query(`
-            SELECT id_personal, nombre, apellido, cedula, telefono, email, cargo, horario
-            FROM personal_rrhh
-            ORDER BY cargo, apellido
-        `);
+        const personal = await pool.query(queryText, queryParams);
         res.json(personal.rows);
     } catch (err) {
         console.error('Error al obtener personal:', err.message);
@@ -3171,7 +3191,29 @@ app.get('/api/admin/recursos-humanos', auth(['Administrador']), async (req, res)
     }
 });
 
-// RUTA: DELETE /api/admin/recursos-humanos/:id_personal
+// RUTA: PUT /api/admin/recursos-humanos/:id_personal (Editar Personal)
+app.put('/api/admin/recursos-humanos/:id_personal', auth(['Administrador']), async (req, res) => {
+    const { id_personal } = req.params;
+    // Solo se permite editar estos campos, no la cédula ni el nombre.
+    const { telefono, email, cargo, horario } = req.body; 
+    
+    try {
+        const result = await pool.query(
+            `UPDATE personal_rrhh 
+             SET telefono = $1, email = $2, cargo = $3, horario = $4
+             WHERE id_personal = $5
+             RETURNING *`,
+            [telefono, email, cargo, horario, id_personal]
+        );
+        if (result.rowCount === 0) return res.status(404).json({ msg: 'Personal no encontrado.' });
+        res.json({ msg: 'Datos de personal actualizados.' });
+    } catch (err) {
+        console.error('Error al actualizar personal:', err.message);
+        res.status(500).json({ msg: 'Error del servidor al actualizar personal.' });
+    }
+});
+
+// RUTA: DELETE /api/admin/recursos-humanos/:id_personal (Eliminar Personal)
 app.delete('/api/admin/recursos-humanos/:id_personal', auth(['Administrador']), async (req, res) => {
     const { id_personal } = req.params;
     try {
@@ -3271,6 +3313,7 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
 
 
 
