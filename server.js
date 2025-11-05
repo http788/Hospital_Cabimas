@@ -2854,8 +2854,9 @@ app.get('/api/admin/camas', auth(['Administrador']), async (req, res) => {
     }
 });
 
+// server.js
+
 // 3. RUTA: PUT /api/admin/camas/:id_cama (Actualizar Estado, Ocupar, Liberar)
-// --- CÓDIGO CORREGIDO ---
 app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) => {
     const { id_cama } = req.params;
     const { estado, fk_paciente_actual, motivo_ingreso, fk_doctor_acargo } = req.body; 
@@ -2864,10 +2865,10 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
         return res.status(400).json({ msg: "El nuevo estado de la cama es requerido." });
     }
     
-    // --- INICIO DE CORRECCIÓN: El 'try' ahora engloba TODA la lógica ---
+    // --- INICIO DE CORRECCIÓN A PRUEBA DE FALLOS ---
     try {
         
-        // Lógica de Liberación/Limpieza
+        // Lógica de Liberación/Limpieza (Estado: Limpieza, Disponible, Mantenimiento)
         if (estado !== 'Ocupada') {
             await pool.query(
                 `UPDATE camas SET 
@@ -2882,29 +2883,30 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
             return res.json({ msg: `Cama ${id_cama} actualizada. Estado: ${estado}` });
         }
 
-        // --- Lógica para OCUPADA (Ahora dentro del try...catch) ---
+        // --- Lógica para OCUPADA ---
+        
+        // 0. VERIFICACIÓN CRÍTICA DE DATOS NECESARIOS
+        if (!fk_paciente_actual || !fk_doctor_acargo || !motivo_ingreso) {
+            return res.status(400).json({ msg: "Faltan datos de paciente, doctor o motivo de ingreso para ocupar la cama." });
+        }
         
         // 1. Mapear ID de Usuario (Paciente) a id_paciente
         let pacienteIdEnTablaPacientes = null;
-        if (fk_paciente_actual) {
-            const pacienteResult = await pool.query('SELECT id_paciente FROM pacientes WHERE fk_usuario = $1', [fk_paciente_actual]);
-            if (pacienteResult.rows.length === 0) {
-                return res.status(400).json({ msg: "ID de Paciente (usuario) no válido o no está registrado como tal." });
-            }
-            pacienteIdEnTablaPacientes = pacienteResult.rows[0].id_paciente;
+        const pacienteResult = await pool.query('SELECT id_paciente FROM pacientes WHERE fk_usuario = $1', [fk_paciente_actual]);
+        if (pacienteResult.rows.length === 0) {
+            return res.status(400).json({ msg: "Error: ID de Paciente (usuario) no válido o no está registrado como tal." });
         }
+        pacienteIdEnTablaPacientes = pacienteResult.rows[0].id_paciente;
         
         // 2. Mapear ID de Usuario (Doctor) a id_doctor
         let doctorIdEnTablaDoctores = null;
-        if (fk_doctor_acargo) {
-            const doctorResult = await pool.query('SELECT id_doctor FROM doctores WHERE fk_usuario = $1', [fk_doctor_acargo]);
-            if (doctorResult.rows.length === 0) {
-                return res.status(400).json({ msg: "ID de Doctor (usuario) no válido o no está registrado como tal." });
-            }
-            doctorIdEnTablaDoctores = doctorResult.rows[0].id_doctor;
+        const doctorResult = await pool.query('SELECT id_doctor FROM doctores WHERE fk_usuario = $1', [fk_doctor_acargo]);
+        if (doctorResult.rows.length === 0) {
+            return res.status(400).json({ msg: "Error: ID de Doctor (usuario) no válido o no está registrado como tal." });
         }
+        doctorIdEnTablaDoctores = doctorResult.rows[0].id_doctor;
 
-        // 3. Ejecutar la actualización
+        // 3. Ejecutar la actualización con los IDs mapeados
         const query = `
             UPDATE camas 
             SET estado = $1, 
@@ -2925,11 +2927,12 @@ app.put('/api/admin/camas/:id_cama', auth(['Administrador']), async (req, res) =
         res.json({ msg: "Cama actualizada exitosamente", cama: result.rows[0] });
 
     } catch (error) {
-        // --- FIN DE CORRECCIÓN: Ahora esto captura TODOS los errores ---
-        console.error('Error al actualizar cama:', error.message);
-        res.status(500).json({ msg: "Error interno del servidor al actualizar la cama." });
+        // Este catch debería manejar CUALQUIER error de la DB y responder en JSON
+        console.error('Error catastrófico al actualizar cama:', error.message, error.stack);
+        // Si el error es una violación de restricción (NOT NULL), la DB lanza el error aquí.
+        res.status(500).json({ msg: "Error interno del servidor. Posible restricción de la base de datos no cumplida." });
     }
-}); 
+});
  
  
  
@@ -3151,4 +3154,5 @@ app.listen(PORT, () => {
     console.log(`🏥 Hospital Dr Adolfo D' Empaire - Servidor Iniciado`);
     console.log(`🚀 Servidor Node.js escuchando en http://localhost:${PORT}`);
     console.log('----------------------------------------------------');
+
 });
