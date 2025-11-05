@@ -1430,61 +1430,82 @@
         }
         
         // admin.html
+// admin.html
 
-       // (Esto está en admin.html)
-
-        async function handleCamaFormSubmit(id_cama) {
-            const nuevoEstado = document.getElementById('cama-accion').value;
-            if (!nuevoEstado) return showToast('Debe seleccionar una acción.', 'error');
-            
-            let fk_paciente_id = null;
-            let fk_doctor_id = null;
-            let motivo_ingreso = '';
-
-            try {
-                if (nuevoEstado === 'Ocupada') {
-                    
-                    // --- CORRECCIÓN: REINTRODUCIDAS LAS CÉDULAS DEL FORMULARIO ---
-                    const cedulaPac = document.getElementById('cama-paciente-cedula').value.trim();
-                    const cedulaDoc = document.getElementById('cama-doctor-cedula').value.trim();
-                    // --- FIN CORRECCIÓN ---
-
-                    if (!cedulaPac || !cedulaDoc) {
-                        return showToast('Error: Cédula de paciente y doctor son requeridas para ocupar la cama.', 'error');
-                    }
-                    
-                    // 1. Buscar Paciente por Cédula (Retorna id_usuario)
-                    const pac = await apiFetch(`/pacientes/buscar-id?cedula=${cedulaPac}`);
-                    if (!pac || !pac.id_usuario || pac.nombre_rol !== 'Paciente') {
-                        return showToast('Error: Paciente no encontrado con esa Cédula o no es un Paciente activo.', 'error');
-                    }
-                    
-                    // 2. Buscar Doctor por Cédula (Retorna id_usuario)
-                    const doc = await apiFetch(`/pacientes/buscar-id?cedula=${cedulaDoc}`);
-                    if (!doc || !doc.id_usuario || doc.nombre_rol !== 'Doctor') {
-                        return showToast('Error: Doctor no encontrado con esa Cédula o no es un Doctor activo.', 'error');
-                    }
-
-                    // 3. Asignar los ID de Usuario (fk_usuario)
-                    fk_paciente_id = pac.id_usuario;
-                    fk_doctor_id = doc.id_usuario;
-                    motivo_ingreso = document.getElementById('cama-motivo').value.trim();
-                    
-                    if (!motivo_ingreso) {
-                        return showToast('Error: El motivo de ingreso es obligatorio.', 'error');
-                    }
-                }
+async function handleCamaClick(camaData) {
+    const id_cama = camaData.id_cama;
+    const estado_actual = camaData.estado;
+    let formHtml = '';
+    let titulo = `Gestionar Cama ${camaData.numero_cama}`;
+    
+    // Si la cama está OCUPADA, muestra detalles y el botón Liberar
+    if (estado_actual === 'Ocupada') {
+        const fechaIngreso = camaData.fecha_ingreso ? new Date(camaData.fecha_ingreso).toLocaleString('es-VE') : 'No registrada';
+        formHtml = `
+            <h3><i class="fas fa-bed"></i> Datos del Paciente Ocupante</h3>
+            <p><strong><i class="fas fa-calendar-alt"></i> Fecha de Ingreso:</strong> ${fechaIngreso}</p>
+            <hr>
+            <p><strong><i class="fas fa-user-injured"></i> Paciente:</strong> ${camaData.paciente_nombre || 'N/A'} ${camaData.paciente_apellido || ''}</p>
+            <p><strong><i class="fas fa-id-card"></i> Cédula Paciente:</strong> ${camaData.paciente_cedula || 'N/A'}</p>
+            <p><strong><i class="fas fa-user-md"></i> Doctor a Cargo:</strong> ${camaData.doctor_nombre || 'N/A'} ${camaData.doctor_apellido || ''}</p>
+            <p><strong><i class="fas fa-id-card"></i> Cédula Doctor:</strong> ${camaData.doctor_cedula || 'N/R'}</p>
+            <p><strong><i class="fas fa-clipboard"></i> Motivo Ingreso:</strong> ${camaData.motivo_ingreso || 'No registrado'}</p>
+            <hr style="margin: 20px 0;">
+            <p>Para desocupar esta cama, presione "Liberar". El estado cambiará a "Limpieza".</p>
+        `;
+        openConfirmModal(titulo, formHtml, async () => {
+            await updateCamaEstado(id_cama, 'Limpieza');
+        });
+        modalBtnConfirm.innerText = 'Sí, Liberar Cama';
+        return;
+    }
+    
+    // Si la cama está LIBRE o en LIMPIEZA
+    formHtml = `
+        <p>Estado Actual: <strong>${estado_actual}</strong></p>
+        <div class="form-container" style="box-shadow: none; padding: 0;">
+            <form id="cama-form" onsubmit="event.preventDefault()">
+                <label for="cama-accion">Seleccione Acción:</label>
+                <select id="cama-accion" onchange="toggleCamaForm(this.value)">
+                    <option value="">Seleccione...</option>
+                    ${estado_actual === 'Libre' ? '<option value="Ocupada">Ocupar Cama</option>' : ''}
+                    ${estado_actual === 'Limpieza' ? '<option value="Libre">Marcar como Limpia (Disponible)</option>' : ''}
+                </select>
                 
-                // 4. Llamar al servidor (solo se ejecuta si las búsquedas de ID fueron exitosas)
-                await updateCamaEstado(id_cama, nuevoEstado, fk_paciente_id, fk_doctor_id, motivo_ingreso);
-                closeModal();
-
-            } catch (error) {
-                // 5. Capturar fallos de red o errores de la API
-                showToast(`Error al buscar usuario: ${error.message}`, 'error');
-            }
+                <div id="cama-ocupar-detalle" style="margin-top: 15px; display: none;"> 
+                    <label for="cama-paciente-cedula">Cédula Paciente (Ej: V1234567):</label>
+                    <input type="text" id="cama-paciente-cedula" placeholder="Ej: V12345678">
+                    <label for="cama-doctor-cedula">Cédula Doctor (Ej: V7654321):</label>
+                    <input type="text" id="cama-doctor-cedula" placeholder="Ej: V7654321">
+                    <label for="cama-motivo">Motivo de Ingreso:</label>
+                    <input type="text" id="cama-motivo" placeholder="Ej: Cirugía de Apéndice">
+                </div>
+            </form>
+        </div>
+    `;
+    
+    // Establecer el botón de confirmar y abrir el modal
+    openFormModal(titulo, formHtml, async () => {
+        await handleCamaFormSubmit(id_cama);
+    });
+    
+    // --- NUEVO PASO CRÍTICO AÑADIDO ---
+    // Si el estado es 'Libre', forzamos la aparición de los campos al seleccionar 'Ocupada'
+    if (estado_actual === 'Libre') {
+        const select = document.getElementById('cama-accion');
+        if (select && select.value === 'Ocupada') {
+             toggleCamaForm('Ocupada'); // Llamada para mostrar los campos
         }
-                     
+    }
+    // --- FIN DE NUEVO PASO CRÍTICO ---
+}
+
+// Ahora, asegúrate que la función toggleCamaForm esté bien definida (línea 1483):
+/*
+        function toggleCamaForm(value) {
+            document.getElementById('cama-ocupar-detalle').style.display = (value === 'Ocupada') ? 'block' : 'none';
+        }
+                }        
         // --- 8. ALERTAS EPIDEMIOLÓGICAS ---
         async function loadAlertas() {
             contentArea.innerHTML = `
@@ -1626,5 +1647,4 @@
 
     </script>
 </body>
-
 </html>
