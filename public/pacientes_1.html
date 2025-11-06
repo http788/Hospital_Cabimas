@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Servicios - Paciente</title>
+    <link rel="stylesheet" href="styles.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        /* CSS ESPECÍFICO DEL PANEL (Colores Oscuro-Azul y Rojo) */
+        :root {
+            --color-principal: #0D47A1; /* Dark Blue */
+            --color-acento: #D32F2F;   /* Red */
+            --color-fondo: #F5F5F5;
+            --color-panel-bg: #FFFFFF;
+            --color-texto-claro: #FFFFFF;
+            --color-sombra: 0 8px 16px rgba(0, 0, 0, 0.15); 
+            --color-secundario: #42A5F5; 
+        }
+        
+        body { 
+            background-color: var(--color-fondo); 
+            font-family: 'Arial', sans-serif; 
+            opacity: 0; 
+            transition: opacity 0.5s ease-in-out; 
+            display: flex; 
+            margin: 0; 
+            color: #333;
+        }
+        
+        .dashboard-container { 
+            display: flex; 
+            min-height: 100vh; 
+            width: 100%; 
+        }
+
+        /* ----------------------- 1. SIDEBAR Y MENÚ (UNIFICADO) ----------------------- */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, var(--color-principal) 0%, #003366 100%); 
+            color: var(--color-texto-claro);
+            padding: 20px;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0; 
+            z-index: 10; 
+        }
+        
+        .sidebar h2 { 
+            margin-bottom: 30px; border-bottom: 3px solid var(--color-acento); padding-bottom: 15px; 
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* ESTILOS DE ITEM DE MENÚ UNIFICADOS */
+        .menu-item {
+            display: flex; 
+            align-items: center;
+            padding: 15px 10px;
+            cursor: pointer;
+            border-radius: 8px; 
+            transition: background-color 0.3s, transform 0.2s;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: var(--color-texto-claro) !important;
+        }
+        .menu-item i { margin-right: 15px; font-size: 1.2em; }
+        .menu-item:hover {
+            background-color: var(--color-secundario);
+            transform: translateY(-2px); 
+        }
+        .menu-item.active {
+            background-color: var(--color-acento);
+            box-shadow: var(--color-sombra);
+            transform: translateY(-2px);
+        }
+        /* FIN ESTILOS DE ITEM DE MENÚ UNIFICADOS */
+        
+        .logout-menu-item {
+            margin-top: 50px; background-color: #8D021F !important; 
+        }
+        .logout-menu-item:hover {
+            background-color: var(--color-acento) !important;
+            transform: translateY(-2px);
+        }
+        
+        /* ----------------------- 2. CONTENIDO PRINCIPAL ----------------------- */
+        .main-content {
+            flex-grow: 1; padding: 40px; background-color: var(--color-fondo);
+        }
+        .panel-header {
+            margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 15px;
+            display: flex; align-items: center; 
+        }
+        .menu-toggle {
+            display: none; 
+            font-size: 1.8em;
+            cursor: pointer;
+            color: var(--color-principal); 
+            margin-right: 15px; 
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+            display: none; 
+        }
+
+        /* Estilos de las Pestañas de Contenido (Instantáneo para no notar el cambio) */
+        .content-section {
+            display: none; background-color: var(--color-panel-bg); padding: 30px; border-radius: 10px; box-shadow: var(--color-sombra); 
+        }
+        .content-section.active { display: block; }
+
+        /* Controles de Formulario y Botones */
+        textarea, select, input[type="text"], input[type="date"], input[type="time"], input[type="file"], input[type="number"] {
+            width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; 
+            font-size: 1em; min-height: 40px; 
+        }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .familiar-form button, .cita-form button, .medicamento-form button {
+            background-color: var(--color-acento); color: var(--color-texto-claro); border: none; padding: 15px 30px; 
+            border-radius: 6px; cursor: pointer; margin-top: 15px; font-weight: bold; font-size: 1.1em; 
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .cita-form button { background-color: var(--color-principal) !important; }
+        
+        /* Estilos de Tablas */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; word-break: break-word; }
+        th { background-color: var(--color-principal); color: white; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f6f6f6; }
+        
+        /* ESTADOS DE LA CITA */
+        .status-badge { padding: 5px 10px; border-radius: 15px; color: white; font-size: 0.9em; font-weight: bold; }
+        .status-completada { background-color: #28A745; } /* Verde */
+        .status-aceptada { background-color: #007BFF; } /* Azul */
+        .status-pendiente { background-color: #FFC107; color: #333; } /* Amarillo/Naranja */
+        .status-rechazada { background-color: #DC3545; } /* Rojo */
+        .status-procesada { background-color: #007BFF; } /* Mismo que Aceptada para medicamentos */
+        .status-entregada { background-color: #28A745; } /* Mismo que Completada para medicamentos */
+        
+        .empty-table { text-align: center !important; padding: 30px !important; color: #777; font-style: italic; }
+
+
+        /* ----------------------- 4. RESPONSIVIDAD (VISTA MÓVIL) ----------------------- */
+        @media (max-width: 900px) {
+            .dashboard-container { flex-direction: column; }
+            .sidebar {
+                position: fixed;
+                left: -250px; 
+                height: 100%;
+                top: 0;
+                transition: left 0.3s ease-in-out; /* Animación de la hamburguesa */
+                z-index: 100; 
+                padding-top: 50px; 
+            }
+            .sidebar.open {
+                left: 0; 
+            }
+            .menu-toggle {
+                display: block; 
+            }
+            .main-content {
+                width: 100%;
+                padding: 20px;
+                padding-top: 80px; 
+            }
+            .panel-header {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                background-color: var(--color-panel-bg);
+                padding: 15px 20px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                z-index: 90;
+                margin-bottom: 0;
+                border-bottom: none;
+            }
+            .panel-header h1 {
+                font-size: 1.3em;
+            }
+            /* Adaptar tablas para móvil (columnas se convierten en filas) */
+             table, thead, tbody, th, td, tr { 
+                display: block; 
+            }
+            thead tr { 
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            tr { border: 1px solid #ccc; margin-bottom: 10px; border-radius: 8px;}
+            td { 
+                border: none;
+                border-bottom: 1px solid #eee; 
+                position: relative;
+                padding-left: 50%; 
+                text-align: right;
+            }
+            td:before { 
+                position: absolute;
+                top: 6px;
+                left: 6px;
+                width: 45%; 
+                padding-right: 10px; 
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                color: var(--color-principal);
+            }
+            /* Labels de tablas para móviles (usando data-label) */
+            td:nth-of-type(1):before { content: attr(data-label); }
+            td:nth-of-type(2):before { content: attr(data-label); }
+            td:nth-of-type(3):before { content: attr(data-label); }
+            td:nth-of-type(4):before { content: attr(data-label); }
+            td:nth-of-type(5):before { content: attr(data-label); }
+            td:nth-of-type(6):before { content: attr(data-label); }
+        }
+    </style>
+</head>
+<body style="opacity: 0;"> 
+    <script>
+        const API_BASE = '/api/paciente';
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+        
+        // Función para mostrar/ocultar el menú hamburguesa
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('open');
+            overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+        }
+        
+        // FUNCIÓN CENTRALIZADA DE NAVEGACIÓN (Versión pacientes_1.html)
+        function navigate(sectionId) {
+            // Secciones que maneja este archivo localmente
+            const localSections = ['citas', 'medicamentos', 'familiares'];
+            
+            if (localSections.includes(sectionId)) {
+                localShowContent(sectionId); // Mostrar contenido local
+            } else {
+                // Redirigir a paciente.html para secciones de perfil (Inicio, Perfil, Historial, Notificaciones, Configuración)
+                window.location.href = `paciente.html#${sectionId}`;
+            }
+        }
+
+        async function apiFetch(endpoint, method = 'GET', data = null) {
+            const token = localStorage.getItem('token');
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            };
+            
+            const config = { method: method, headers: headers };
+            if (data && method !== 'GET') {
+                config.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, config);
+                
+                if (response.status === 401 || response.status === 403) {
+                    alert(`❌ Sesión expirada. Por favor, inicie sesión de nuevo.`);
+                    logout(); 
+                    throw new Error('Token Inválido/Expirado'); 
+                }
+
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        const errorMsg = result.msg || `Error ${response.status}: Error desconocido del servidor.`;
+                        throw new Error(errorMsg);
+                    }
+                    return result;
+                } else {
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error("API Fetch Falló (No JSON):", errorText);
+                        throw new Error(`Error ${response.status}: El servidor respondió con un formato inesperado.`);
+                    }
+                    return {}; // Respuesta vacía OK
+                }
+            } catch (error) {
+                console.error(`API Fetch Falló:`, error);
+                if (error.message.includes('fetch')) {
+                     throw new Error('No se pudo conectar al servidor. Revise el backend (Node.js/PgAdmin4).');
+                }
+                throw new Error(error.message);
+            }
+        }
+
+        // Función local para cambiar de sección (Mantiene el efecto rápido/sin recarga)
+        function localShowContent(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            const target = document.getElementById(sectionId);
+            if (target) {
+                target.classList.add('active'); 
+            }
+            
+            document.querySelectorAll('.menu-item').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            const menuLink = document.getElementById(`menu-${sectionId}`);
+            if (menuLink) {
+                menuLink.classList.add('active');
+            }
+            
+            history.pushState(null, null, `pacientes_1.html#${sectionId}`); 
+            
+            // CIERRA EL MENÚ EN VISTA MÓVIL
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('open') && window.innerWidth <= 900) {
+                toggleMenu();
+            }
+            
+            // Recargar datos al cambiar de pestaña
+            if (sectionId === 'citas') loadCitasHistorial();
+            else if (sectionId === 'medicamentos') loadSolicitudesMedicamentos();
+            else if (sectionId === 'familiares') loadFamiliares();
+        }
+        
+        // ----------------------------------------------------------------------
+        // LÓGICA de CITAS
+        // ----------------------------------------------------------------------
+        
+        async function loadEspecialidades() {
+            try {
+                const response = await fetch('/api/public/especialidades');
+                if (!response.ok) throw new Error('Error al cargar especialidades');
+                const especialidades = await response.json();
+                
+                const select = document.getElementById('agendar-especialidad');
+                select.innerHTML = '<option value="">Seleccione Especialidad</option>';
+                
+                especialidades.forEach(nombre => {
+                    select.innerHTML += `<option value="${nombre}">${nombre}</option>`;
+                });
+                
+            } catch (error) {
+                 console.error("Error al cargar especialidades:", error);
+                 document.getElementById('agendar-especialidad').innerHTML = '<option value="">Error al cargar.</option>';
+            }
+        }
+
+        async function loadDoctores(especialidad) {
+            const select = document.getElementById('agendar-doctor');
+            select.innerHTML = '<option value="">Seleccione Doctor</option>';
+            
+            if (!especialidad) return;
+            
+            try {
+                const encodedEspecialidad = encodeURIComponent(especialidad);
+                const response = await fetch(`/api/public/doctores/${encodedEspecialidad}`);
+                if (!response.ok) throw new Error('Error al cargar doctores');
+                const doctores = await response.json();
+                
+                if (doctores.length === 0) {
+                    select.innerHTML = '<option value="">No hay doctores activos</option>';
+                    return;
+                }
+                
+                doctores.forEach(item => {
+                    select.innerHTML += `<option value="${item.id_doctor}">${item.nombre} ${item.apellido}</option>`;
+                });
+                
+            } catch (error) {
+                console.error("Error al cargar doctores:", error);
+                select.innerHTML = '<option value="">Error al cargar doctores.</option>';
+            }
+        }
+
+        async function agendarCita(event) {
+            event.preventDefault();
+            const form = event.target;
+            
+            const fechaHora = form['agendar-fecha'].value && form['agendar-hora'].value 
+                              ? `${form['agendar-fecha'].value}T${form['agendar-hora'].value}:00` 
+                              : null; 
+            
+            const data = {
+                id_doctor: form['agendar-doctor'].value,
+                fecha_hora: fechaHora,
+                motivo_consulta: form['agendar-motivo'].value
+            };
+
+            if (!data.id_doctor || !data.fecha_hora || !data.motivo_consulta) {
+                alert("Por favor, complete todos los campos de la cita.");
+                return;
+            }
+
+            try {
+                const result = await apiFetch('/citas/agendar', 'POST', data); 
+                alert('✅ Cita solicitada: ' + result.msg);
+                form.reset();
+                loadCitasHistorial(); 
+            } catch (error) {
+                alert('❌ Error al agendar cita: ' + error.message);
+                console.error("Error al agendar cita:", error);
+            }
+        }
+        
+        async function loadCitasHistorial() {
+            try {
+                const citas = await apiFetch('/citas/historial'); 
+                const container = document.getElementById('historial-citas-body');
+                container.innerHTML = ''; 
+
+                if (citas.length === 0) {
+                    container.innerHTML = '<tr><td colspan="4" data-label="Estado" class="empty-table">No hay citas registradas en tu historial.</td></tr>';
+                    return;
+                }
+                
+                citas.forEach(cita => {
+                    let estadoClass = '';
+                    if (cita.estado_cita === 'Completada') estadoClass = 'status-completada';
+                    else if (cita.estado_cita === 'Aceptada') estadoClass = 'status-aceptada';
+                    else if (cita.estado_cita === 'Pendiente') estadoClass = 'status-pendiente';
+                    else if (cita.estado_cita === 'Rechazada') estadoClass = 'status-rechazada';
+
+                    const fecha = new Date(cita.fecha_hora_consulta).toLocaleString('es-VE', { 
+                        year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' 
+                    });
+
+                    container.innerHTML += `
+                        <tr>
+                            <td data-label="Fecha y Hora">${fecha}</td>
+                            <td data-label="Doctor">${cita.doctor_nombre || 'N/A'} ${cita.doctor_apellido || ''} (${cita.especialidad || 'N/A'})</td>
+                            <td data-label="Motivo">${cita.motivo_consulta}</td>
+                            <td data-label="Estado"><span class="status-badge ${estadoClass}">${cita.estado_cita}</span></td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                const errorMsg = error.message.includes('backend') ? error.message : `Error al cargar citas. **REVISA LA CONSULTA SQL EN SERVER.JS**`;
+                console.error("Error al cargar historial de citas:", error);
+                document.getElementById('historial-citas-body').innerHTML = `<tr><td colspan="4" data-label="Estado" class="empty-table error">❌ ${errorMsg}</td></tr>`;
+            }
+        }
+
+
+        // ----------------------------------------------------------------------
+        // LÓGICA de MEDICAMENTOS
+        // ----------------------------------------------------------------------
+        
+        async function solicitarMedicamento(event) {
+            event.preventDefault();
+            const form = event.target;
+            
+            const fileInput = form.querySelector('input[type="file"]');
+            
+            if (fileInput.files.length === 0) {
+                alert("Debe adjuntar la receta médica (JPG, PNG o PDF).");
+                return;
+            }
+            if (!form['nombre_medicamento'].value || !form['dosis_mg'].value || !form['cantidad'].value || !form['doctor_solicitante'].value) {
+                alert("Por favor, complete todos los campos de detalles del medicamento.");
+                return;
+            }
+            
+            const descripcionCompleta = `
+                Medicamento: ${form['nombre_medicamento'].value.toUpperCase()}
+                Dosis/Concentración: ${form['dosis_mg'].value}
+                Cantidad: ${form['cantidad'].value}
+                Doctor Solicitante: ${form['doctor_solicitante'].value}
+                Notas Adicionales: ${form['notas_adicionales'].value || 'Ninguna'}
+            `.trim();
+            
+            const formData = new FormData(); 
+            formData.append('receta_adjunta', fileInput.files[0]);
+            formData.append('nota_solicitud', descripcionCompleta); 
+
+            try {
+                const token = localStorage.getItem('token');
+                
+                const response = await fetch(`${API_BASE}/medicamentos/solicitar`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                
+                if (response.status === 401 || response.status === 403) { alert(`❌ Sesión expirada.`); logout(); return; }
+                
+                const contentType = response.headers.get("content-type");
+                let result = {};
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    result = await response.json();
+                }
+
+                if (!response.ok) { throw new Error(result.msg || `Error del servidor al solicitar medicamento.`); }
+                
+                alert('✅ Solicitud de medicamento enviada correctamente.');
+                form.reset(); 
+                loadSolicitudesMedicamentos(); 
+
+            } catch (error) {
+                alert('❌ Error al solicitar medicamento: ' + error.message);
+                console.error("Error al solicitar medicamento:", error);
+            }
+        }
+
+        async function loadSolicitudesMedicamentos() {
+            try {
+                const solicitudes = await apiFetch('/medicamentos/solicitud'); 
+                const container = document.getElementById('historial-medicamentos-body');
+                container.innerHTML = '';
+
+                if (solicitudes.length === 0) {
+                    container.innerHTML = '<tr><td colspan="6" data-label="Estado" class="empty-table">No has realizado solicitudes de medicamentos.</td></tr>';
+                    return;
+                }
+                
+                solicitudes.forEach(sol => {
+                    const fecha = new Date(sol.fecha_solicitud).toLocaleDateString('es-VE');
+                    let estadoClass = '';
+                    if (sol.estado === 'Entregada') estadoClass = 'status-entregada';
+                    else if (sol.estado === 'Procesada') estadoClass = 'status-procesada';
+                    else if (sol.estado === 'Pendiente') estadoClass = 'status-pendiente';
+                    else if (sol.estado === 'Rechazada') estadoClass = 'status-rechazada';
+                    
+                    const downloadLink = sol.receta_adjunta 
+                        ? `<a href="/uploads/recetas/${sol.receta_adjunta}" target="_blank" style="color: var(--color-acento); font-weight: bold;"><i class="fas fa-download"></i> Ver Receta</a>` 
+                        : 'N/A';
+                    
+                    const atendidoPor = sol.procesa_nombre 
+                        ? `${sol.procesa_nombre} ${sol.procesa_apellido}` 
+                        : '<span style="color:#FFC107;">Pendiente</span>';
+
+                    container.innerHTML += `
+                        <tr>
+                            <td data-label="ID">${sol.id_solicitud}</td>
+                            <td data-label="Fecha Sol.">${fecha}</td>
+                            <td data-label="Medicamento/Detalle"><pre style="margin:0; white-space: pre-wrap; font-family: inherit; font-size: 0.95em;">${sol.descripcion_solicitud || 'Descripción no ingresada'}</pre></td> 
+                            <td data-label="Atendido Por">${atendidoPor}</td>
+                            <td data-label="Estado"><span class="status-badge ${estadoClass}">${sol.estado}</span></td>
+                            <td data-label="Receta">${downloadLink}</td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error al cargar solicitudes de medicamentos:", error);
+                document.getElementById('historial-medicamentos-body').innerHTML = `<tr><td colspan="6" data-label="Estado" class="empty-table error">❌ Error al cargar historial. ${error.message}</td></tr>`;
+            }
+        }
+        
+        // ----------------------------------------------------------------------
+        // LÓGICA de FAMILIARES
+        // ----------------------------------------------------------------------
+
+        async function loadFamiliares() {
+            try {
+                const familiares = await apiFetch('/familiares');
+                const container = document.getElementById('familiares-list-body');
+                container.innerHTML = '';
+
+                if (familiares.length === 0) {
+                    container.innerHTML = '<tr><td colspan="4" data-label="Relación" class="empty-table">No tienes familiares/menores registrados.</td></tr>';
+                    return;
+                }
+                
+                familiares.forEach(f => {
+                    const fechaNacimiento = new Date(f.fecha_nacimiento).toLocaleDateString('es-VE');
+
+                    container.innerHTML += `
+                        <tr>
+                            <td data-label="Nombre Completo">${f.nombre} ${f.apellido}</td>
+                            <td data-label="Cédula">${f.cedula}</td>
+                            <td data-label="Relación">${f.relacion}</td>
+                            <td data-label="Fecha Nacimiento">${fechaNacimiento}</td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error al cargar familiares:", error);
+                document.getElementById('familiares-list-body').innerHTML = `<tr><td colspan="4" data-label="Relación" class="empty-table error">❌ Error al cargar datos. ${error.message}</td></tr>`;
+            }
+        }
+
+        async function saveFamiliar(event) {
+            event.preventDefault();
+            const form = event.target;
+            
+            const data = {
+                nombre: form.nombre.value,
+                apellido: form.apellido.value,
+                cedula: form.cedula.value,
+                parentesco: form.relacion.value,
+                fecha_nacimiento: form.fecha_nacimiento.value
+            };
+
+            try {
+                const result = await apiFetch('/familiares', 'POST', data); 
+                alert('✅ ' + result.msg);
+                form.reset(); 
+                loadFamiliares(); 
+            } catch (error) {
+                alert('❌ Error al agregar familiar: ' + error.message);
+                console.error("Error al agregar familiar:", error);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const userRole = localStorage.getItem('rol');
+            const userName = localStorage.getItem('user_name') || 'Paciente';
+
+            if (!token || userRole !== 'Paciente') {
+                alert('❌ Sesión no encontrada o rol incorrecto. Redirigiendo...');
+                logout();
+            } else {
+                document.body.style.opacity = 1; 
+                document.getElementById('user-display-name').textContent = userName;
+                
+                const urlHash = window.location.hash.substring(1) || 'citas'; 
+                
+                // Mantiene el hash de la URL al cargar
+                navigate(urlHash);
+                
+                loadEspecialidades(); 
+            }
+        });
+    </script>
+
+    <div class="dashboard-container">
+        <div class="sidebar" id="sidebar">
+            <h2><i class="fas fa-hospital-user"></i> Panel Paciente</h2>
+            
+            <div id="menu-inicio" class="menu-item" onclick="navigate('inicio')"><i class="fas fa-home"></i> Inicio</div>
+            <div id="menu-perfil" class="menu-item" onclick="navigate('perfil')"><i class="fas fa-user-circle"></i> Mi Perfil</div>
+            <div id="menu-antecedentes" class="menu-item" onclick="navigate('antecedentes')"><i class="fas fa-file-medical"></i> Historial Médico</div>
+            
+            <hr style="border-color: rgba(255,255,255,0.2); margin: 15px 0;">
+            
+            <div id="menu-notificaciones" class="menu-item" onclick="navigate('notificaciones')"><i class="fas fa-bell"></i> Notificaciones</div>
+            
+            <div id="menu-citas" class="menu-item" onclick="navigate('citas')"><i class="fas fa-calendar-check"></i> Citas</div>
+            <div id="menu-medicamentos" class="menu-item" onclick="navigate('medicamentos')"><i class="fas fa-prescription-bottle-alt"></i> Medicamentos</div>
+            <div id="menu-familiares" class="menu-item" onclick="navigate('familiares')"><i class="fas fa-users"></i> Familiares/Menores</div>
+            
+            <div id="menu-configuracion" class="menu-item" onclick="navigate('configuracion')"><i class="fas fa-cog"></i> Configuración</div>
+            
+            <div class="menu-item logout-menu-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</div>
+        </div>
+
+        <div class="main-content">
+            <div class="panel-header">
+                <i class="fas fa-bars menu-toggle" onclick="toggleMenu()"></i>
+                <h1>Gestión de Servicios, <span id="user-display-name">...</span></h1>
+            </div>
+
+            <div id="citas" class="content-section active">
+                <h2><i class="fas fa-calendar-check"></i> Gestión de Citas</h2>
+                
+                <h3><i class="fas fa-plus-circle"></i> Agendar Nueva Cita</h3>
+                <form onsubmit="agendarCita(event)" class="cita-form" style="padding: 20px; border: 1px dashed var(--color-principal); border-radius: 8px; margin-bottom: 30px;">
+                    <div class="form-grid">
+                        <div>
+                            <label for="agendar-especialidad">Especialidad:</label>
+                            <select id="agendar-especialidad" onchange="loadDoctores(this.value)" required>
+                                <option value="">Cargando Especialidades...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="agendar-doctor">Doctor:</label>
+                            <select id="agendar-doctor" required>
+                                <option value="">Seleccione Doctor</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="agendar-fecha">Fecha:</label>
+                            <input type="date" id="agendar-fecha" required>
+                        </div>
+                        <div>
+                            <label for="agendar-hora">Hora:</label>
+                            <input type="time" id="agendar-hora" required>
+                        </div>
+                    </div>
+                    <label for="agendar-motivo">Motivo de la Consulta:</label>
+                    <textarea id="agendar-motivo" rows="2" placeholder="Describa brevemente el motivo de su visita." required></textarea>
+                    
+                    <button type="submit"><i class="fas fa-save"></i> Solicitar Cita</button>
+                </form>
+                
+                <h3><i class="fas fa-history"></i> Historial de Citas</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha y Hora</th>
+                            <th>Doctor</th>
+                            <th>Motivo</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historial-citas-body">
+                        <tr><td colspan="4" data-label="Estado" class="empty-table">Cargando historial de citas...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="medicamentos" class="content-section">
+                <h2><i class="fas fa-prescription-bottle-alt"></i> Solicitudes de Medicamentos</h2>
+                
+                <h3><i class="fas fa-upload"></i> Solicitar Medicamentos por Receta</h3>
+                <p>Complete los detalles del medicamento y suba la receta médica (JPG, PNG o PDF).</p>
+                
+                <form onsubmit="solicitarMedicamento(event)" class="medicamento-form" style="padding: 20px; border: 1px dashed var(--color-acento); border-radius: 8px; margin-bottom: 30px;">
+                    
+                    <h4><i class="fas fa-pills"></i> Información del Medicamento</h4>
+                    <div class="form-grid">
+                        <div>
+                            <label for="nombre_medicamento">Nombre del Medicamento:</label>
+                            <input type="text" id="nombre_medicamento" name="nombre_medicamento" placeholder="Ej: Acetaminofén" required>
+                        </div>
+                        <div>
+                            <label for="dosis_mg">Dosis/Concentración (mg/ml):</label>
+                            <input type="text" id="dosis_mg" name="dosis_mg" placeholder="Ej: 500mg" required>
+                        </div>
+                        <div>
+                            <label for="cantidad">Cantidad Requerida:</label>
+                            <input type="number" id="cantidad" name="cantidad" placeholder="Ej: 2 (Cajas/Frascos)" min="1" required>
+                        </div>
+                    </div>
+                    
+                    <label for="doctor_solicitante">Doctor/Médico que solicitó (Nombre y Apellido):</label>
+                    <input type="text" id="doctor_solicitante" name="doctor_solicitante" placeholder="Ej: Dra. María Pérez" required>
+                    
+                    <label for="notas_adicionales">Notas Adicionales (Ej: 'Para mi hijo', 'Urgente'):</label>
+                    <textarea id="notas_adicionales" name="notas_adicionales" rows="2" placeholder="Información extra que considere relevante."></textarea>
+                    
+                    <hr>
+                    
+                    <div>
+                        <label for="receta-file"><i class="fas fa-file-upload"></i> Receta Médica Adjunta (JPG, PNG o PDF):</label>
+                        <input type="file" id="receta-file" name="receta_adjunta" accept=".jpg, .jpeg, .png, .pdf" required>
+                    </div>
+                    
+                    <button type="submit"><i class="fas fa-paper-plane"></i> Enviar Solicitud</button>
+                </form>
+
+                
+                <h3><i class="fas fa-list-alt"></i> Historial de Solicitudes</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha Sol.</th>
+                            <th>Medicamento/Detalle</th>
+                            <th>Atendido Por</th>
+                            <th>Estado</th>
+                            <th>Receta</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historial-medicamentos-body">
+                        <tr><td colspan="6" data-label="Estado" class="empty-table">Cargando historial de solicitudes...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="familiares" class="content-section">
+                <h2><i class="fas fa-users"></i> Gestión de Familiares y Menores</h2>
+                <p>Registre a sus dependientes o familiares para gestionar sus citas y datos bajo su cuenta.</p>
+
+                <h3><i class="fas fa-plus-circle"></i> Agregar Nuevo Familiar/Menor</h3>
+                <form onsubmit="saveFamiliar(event)" class="familiar-form" style="padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 30px;">
+                    <div class="form-grid">
+                        <div>
+                            <label for="nombre">Nombre:</label>
+                            <input type="text" id="nombre" name="nombre" required>
+                        </div>
+                        <div>
+                            <label for="apellido">Apellido:</label>
+                            <input type="text" id="apellido" name="apellido">
+                        </div>
+                        <div>
+                            <label for="cedula">Cédula o Partida de Nacimiento:</label>
+                            <input type="text" id="cedula" name="cedula" required>
+                        </div>
+                        <div>
+                            <label for="fecha_nacimiento">Fecha de Nacimiento:</label>
+                            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required>
+                        </div>
+                        <div>
+                            <label for="relacion">Relación:</label>
+                            <select id="relacion" name="relacion" required>
+                                <option value="Hijo(a)">Hijo(a)</option>
+                                <option value="Cónyuge">Cónyuge</option>
+                                <option value="Padre/Madre">Padre/Madre</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit"><i class="fas fa-user-plus"></i> Guardar Familiar</button>
+                </form>
+
+                <h3><i class="fas fa-list"></i> Lista de Familiares Registrados</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre Completo</th>
+                            <th>Cédula</th>
+                            <th>Relación</th>
+                            <th>Fecha Nacimiento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="familiares-list-body">
+                        <tr><td colspan="4" data-label="Relación" class="empty-table">Cargando lista de familiares...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="overlay" onclick="toggleMenu()"></div>
+</body>
+</html>
