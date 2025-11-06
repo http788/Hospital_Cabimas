@@ -9,6 +9,28 @@ const nodemailer = require('nodemailer');
 const path = require('path'); // <<<-- IMPORTACIÓN NECESARIA AÑADIDA
 const fs = require('fs'); // <--- NUEVA IMPORTACIÓN PARA MANEJO DE ARCHIVOS
 const multer = require('multer');
+// ********************************************
+// -> AÑADIR ESTO: IMPORTACIÓN DEL MÓDULO RENAL
+// ********************************************
+const renalRoutes = require('./renal_module/renal_routes'); 
+// ********************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // 2. CONFIGURACIÓN INICIAL
 // ==============================================================================
@@ -20,6 +42,20 @@ app.use(express.json());
 
 // Clave Secreta para JWT (¡CÁMBIALA EN PRODUCCIÓN!)
 const jwtSecret = process.env.JWT_SECRET || 'SUPER_CLAVE_SECRETA_HOSPITAL_2025';
+
+// ***************************************************************
+// -> AÑADIR ESTO: CONEXIÓN DEL MÓDULO RENAL INTELIGENTE
+// ***************************************************************
+
+// 1. Servir los archivos estáticos (HTML/CSS) del nuevo módulo
+// Esto permite que el navegador acceda a los HTML de /public_renal
+app.use(express.static(path.join(__dirname, 'public_renal'))); 
+
+// 2. Conectar las rutas del módulo bajo el prefijo '/renal'
+// Todas las peticiones a /renal/... irán a tu archivo renal_routes.js
+app.use('/renal', renalRoutes);
+
+
 
 // 🔑 CONFIGURACIÓN DE ALMACENAMIENTO (MULTER) para Recetas
 const uploadDir = path.join(__dirname, 'public', 'uploads', 'recetas');
