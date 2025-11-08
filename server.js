@@ -556,12 +556,28 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ msg: 'Credenciales inválidas' });
         }
         
-        // 3. Verificación adicional para Doctores: Estado Activo
+        // 3. Verificación adicional para Doctores: Estado Activo Y OBTENER ESPECIALIDAD
+        let especialidad_doctor = null; // Variable para guardar la especialidad
+        
         if (usuario.nombre_rol === 'Doctor') {
-             const doctorStatus = await pool.query('SELECT estado FROM doctores WHERE fk_usuario = $1', [usuario.id_usuario]);
-             if (doctorStatus.rows.length > 0 && doctorStatus.rows[0].estado !== 'Activo') {
-                 return res.status(403).json({ msg: 'Su cuenta de Doctor está pendiente de activación por el administrador. Estado: ' + doctorStatus.rows[0].estado });
+             // CORRECCIÓN: Pedimos 'estado' Y 'especialidad'
+             const doctorData = await pool.query(
+                'SELECT estado, especialidad FROM doctores WHERE fk_usuario = $1', 
+                [usuario.id_usuario]
+             );
+             
+             if (doctorData.rows.length === 0) {
+                 return res.status(404).json({ msg: 'Error: Perfil de doctor no encontrado.' });
              }
+             
+             const doctor = doctorData.rows[0];
+
+             if (doctor.estado !== 'Activo') {
+                 return res.status(403).json({ msg: 'Su cuenta de Doctor está pendiente de activación. Estado: ' + doctor.estado });
+             }
+             
+             // Guardamos la especialidad (Ej: "Nefrología")
+             especialidad_doctor = doctor.especialidad; 
         }
 
         // 4. Generar JSON Web Token (JWT)
@@ -578,18 +594,15 @@ app.post('/api/auth/login', async (req, res) => {
             { expiresIn: '5h' },
             (err, token) => {
                 if (err) throw err;
-                // Si llegamos aquí, el usuario es auténtico (por bypass o bcrypt).
-                res.json({ token, rol: usuario.nombre_rol });
+                
+                // CORRECCIÓN FINAL: Enviamos la especialidad al frontend
+                res.json({ 
+                    token, 
+                    rol: usuario.nombre_rol,
+                    especialidad: especialidad_doctor // Enviamos la especialidad (será 'Nefrología' o null)
+                });
             }
         );
-
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Error del servidor al iniciar sesión');
-    }
-});
-
-
 
 // ==============================================================================
 // 4. FUNCIONES AUXILIARES (Definición Única y Centralizada)
@@ -3333,7 +3346,10 @@ app.get('/api/admin/camas/quirofano', auth(['Administrador']), async (req, res) 
 
 
 
-
+// ==============================================================================
+// EXPORTACIONES PARA MÓDULOS (NECESARIO PARA EL MÓDULO RENAL)
+// ==============================================================================
+module.exports = { pool, auth };
 
 
 
