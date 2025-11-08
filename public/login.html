@@ -343,20 +343,42 @@
                     messageArea.textContent = `¡Ingreso exitoso como ${actualRole}!`; 
                     messageArea.style.display = 'block';
 
+                   // ... (resto de la lógica) ...
+
                     let redirectUrl = '';
+                    
+                    // --- INICIO DE LA CORRECCIÓN ---
                     switch (actualRole) {
                         case 'Administrador':
                             redirectUrl = 'admin.html';
                             break;
+                        
                         case 'Doctor':
-                            redirectUrl = 'doctor.html';
+                            // Verificamos la especialidad que ahora envía el server
+                            if (data.especialidad === 'Nefrología') {
+                                // 1. Es Doctor Y Nefrólogo -> Va al panel nuevo
+                                redirectUrl = 'doctor_nefrologo.html';
+                            } else {
+                                // 2. Es Doctor (pero no Nefrólogo) -> Va al panel viejo
+                                redirectUrl = 'doctor.html';
+                            }
                             break;
+                        
                         case 'Paciente':
                             redirectUrl = 'paciente.html';
                             break;
+                        
                         default:
                             redirectUrl = 'index.html'; 
                     }
+                    // --- FIN DE LA CORRECCIÓN ---
+
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 1500); 
+
+                } else {
+                    // ... (manejo de error) ...
 
                     setTimeout(() => {
                         window.location.href = redirectUrl;
@@ -378,4 +400,5 @@
         });
     </script>
 </body>
+
 </html>
