@@ -516,7 +516,6 @@ app.post('/api/auth/login', async (req, res) => {
 
     // ***************************************************************
     // 🔑 INICIO: BYPASS CRÍTICO PARA EL USUARIO DE PRUEBA (V7654321 / Admin@2025)
-    // ESTA LÓGICA PERMITE INGRESAR AL ADMINISTRADOR IGNORANDO EL FALLO DE BCRYPT
     // ***************************************************************
     let bypassSuccess = false;
     if (cedula === 'V7654321' && password === 'Admin@2025') {
@@ -547,14 +546,16 @@ app.post('/api/auth/login', async (req, res) => {
         let isMatch = bypassSuccess; 
 
         if (!isMatch) {
-            // Si no fue un bypass, intenta la comparación estándar con bcrypt
             isMatch = await bcrypt.compare(password, usuario.contrasena_hash);
         }
 
         if (!isMatch) {
-            // Si falla el bypass (porque no es el usuario de prueba) y falla bcrypt
             return res.status(401).json({ msg: 'Credenciales inválidas' });
         }
+        
+        // ==========================================================
+        // --- INICIO DE LA CORRECCIÓN DE NEFRÓLOGO ---
+        // ==========================================================
         
         // 3. Verificación adicional para Doctores: Estado Activo Y OBTENER ESPECIALIDAD
         let especialidad_doctor = null; // Variable para guardar la especialidad
@@ -579,6 +580,9 @@ app.post('/api/auth/login', async (req, res) => {
              // Guardamos la especialidad (Ej: "Nefrología")
              especialidad_doctor = doctor.especialidad; 
         }
+        // ==========================================================
+        // --- FIN DE LA CORRECCIÓN DE NEFRÓLOGO ---
+        // ==========================================================
 
         // 4. Generar JSON Web Token (JWT)
         const payload = {
@@ -603,7 +607,14 @@ app.post('/api/auth/login', async (req, res) => {
                 });
             }
         );
-
+    } catch (err) {
+        console.error(err.message);
+        if (err.code === '23505') {
+            return res.status(400).json({ msg: 'La cédula o el correo electrónico ya están registrados.' });
+        }
+        res.status(500).send('Error del servidor al registrar');
+    }
+});
 // ==============================================================================
 // 4. FUNCIONES AUXILIARES (Definición Única y Centralizada)
 // ==============================================================================
