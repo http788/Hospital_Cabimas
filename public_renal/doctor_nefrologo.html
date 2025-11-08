@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo Renal Especializado | Dr. Adolfo D' Empaire</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        /* ========================================================= */
+        /* 1. PALETA DE COLORES Y ESTILO DARK MODE */
+        /* ========================================================= */
+        :root {
+            --color-principal: #0D47A1;    /* Azul Oscuro (Fondo de Sidebar/Cards) */
+            --color-acento: #D32F2F;      /* Rojo Acento (Alertas/Botones/Énfasis) */
+            --color-fondo-claro: #F5F5F5; /* Fondo del Contenido Principal */
+            --color-texto-claro: #FFFFFF; /* TODO EL TEXTO BLANCO */
+            --color-texto-oscuro: #212121;/* Texto negro en el área principal clara */
+        }
+
+        /* AJUSTE CLAVE PARA EL RESPONSIVE Y ELIMINAR SCROLL HORIZONTAL */
+        body { 
+            font-family: 'Arial', sans-serif; 
+            background-color: var(--color-fondo-claro); 
+            margin: 0; 
+            color: var(--color-texto-oscuro); 
+            overflow-x: hidden; /* EVITA BARRA HORIZONTAL EN TLFNS */
+            min-height: 100vh;
+        }
+        #doctor-wrapper { display: flex; min-height: 100vh; }
+        
+        /* ========================================================= */
+        /* 2. SIDEBAR (MENÚ LATERAL) - BASE */
+        /* ========================================================= */
+        #menu-lateral {
+            width: 250px;
+            background-color: var(--color-principal);
+            color: var(--color-texto-claro);
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5); 
+            position: fixed;
+            height: 100%;
+            overflow-y: hidden; 
+            z-index: 1000; 
+        }
+        .logo {
+            text-align: center;
+            padding: 0 20px 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--color-acento);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        #menu-lateral a {
+            display: block;
+            padding: 13px 20px; 
+            font-size: 0.95em;   
+            color: var(--color-texto-claro) !important; 
+            text-decoration: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        #menu-lateral a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--color-acento) !important; 
+        }
+        #menu-lateral a i {
+            margin-right: 10px;
+        }
+        .separator {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 10px 0; 
+        }
+
+        .module-header {
+            color: var(--color-texto-claro) !important; 
+            text-align: center;
+            padding: 5px 0; 
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .active-renal {
+            background-color: var(--color-acento) !important; 
+            color: var(--color-texto-claro) !important;
+            font-weight: bold;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5); 
+        }
+
+        /* ========================================================= */
+        /* 3. CONTENIDO PRINCIPAL */
+        /* ========================================================= */
+        #contenido-principal {
+            margin-left: 250px; 
+            flex-grow: 1;
+            padding: 30px;
+            background-color: var(--color-fondo-claro);
+            color: var(--color-texto-oscuro); 
+        }
+        
+        /* Estilos de Cards (Mantenidos) */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        .data-card {
+            background-color: var(--color-principal); 
+            color: var(--color-texto-claro); 
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3); 
+            transition: transform 0.3s;
+        }
+        .data-card h3 { color: var(--color-acento); margin-top: 0; font-size: 1.3em; }
+        .data-card .value { color: var(--color-texto-claro); font-size: 2.8em; font-weight: 700; }
+        .ia-alert-section {
+            background-color: var(--color-acento); 
+            color: var(--color-texto-claro); 
+            padding: 35px;
+            border-radius: 12px;
+            margin-top: 40px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5); 
+        }
+        .ia-alert-section button {
+            background-color: var(--color-texto-claro); 
+            color: var(--color-acento); 
+            border: none; 
+            padding: 10px 25px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin-top: 20px; 
+            font-weight: bold;
+        }
+        
+        /* Estilos para Tablas (usado por Citas, etc.) */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+            background-color: white; 
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden; 
+        }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: var(--color-principal); color: var(--color-texto-claro); }
+        tr:hover { background-color: #f1f1f1; }
+        .empty-table { text-align: center; color: #777; font-style: italic; padding: 20px; }
+        .btn-rojo-small, .btn-principal-small {
+            padding: 5px 8px; font-size: 0.9em; border-radius: 5px; border: none; cursor: pointer;
+        }
+        .btn-rojo-small { background-color: var(--color-acento); color: white; }
+        .btn-principal-small { background-color: var(--color-principal); color: white; }
+
+        /* ========================================================= */
+        /* 4. ADAPTACIÓN RESPONSIVE (MÓVIL) */
+        /* ========================================================= */
+        .menu-toggle {
+            display: none; 
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            background-color: var(--color-principal);
+            color: var(--color-texto-claro);
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+            #menu-lateral {
+                left: -250px;
+                transition: left 0.3s ease;
+                overflow-y: auto; 
+            }
+            #menu-lateral.active {
+                left: 0;
+            }
+            #contenido-principal {
+                margin-left: 0;
+                padding: 70px 20px 20px 20px; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="menu-toggle" onclick="toggleMenu()">
+    <i class="fas fa-bars"></i>
+</div>
+
+<div id="doctor-wrapper">
+
+    <div id="menu-lateral">
+        <div class="logo">Panel Doctor</div>
+
+        <a href="javascript:void(0);" onclick="loadView('perfil')"><i class="fas fa-user-md"></i> Mi Perfil</a>
+        <a href="javascript:void(0);" onclick="loadView('horario')"><i class="fas fa-calendar-alt"></i> Mi Horario</a>
+        <a href="javascript:void(0);" onclick="loadView('citas-pendientes')"><i class="fas fa-clock"></i> Citas Pendientes</a>
+        <a href="javascript:void(0);" onclick="loadView('citas-aceptadas')"><i class="fas fa-check-circle"></i> Citas Aceptadas</a>
+        <a href="javascript:void(0);" onclick="loadView('registrar-visitas')"><i class="fas fa-notes-medical"></i> Registrar Visitas</a>
+        <a href="javascript:void(0);" onclick="loadView('expediente')"><i class="fas fa-folder-open"></i> Expediente Clínico</a>
+
+        <div class="separator"></div>
+
+        <div class="module-header">MÓDULO RENAL INTELIGENTE</div>
+        
+        <a href="javascript:void(0);" onclick="loadView('dashboard-ia')" class="active-renal" id="nav-dashboard-ia">
+            <i class="fas fa-brain"></i> 🧠 Dashboard de IA
+        </a>
+        <a href="javascript:void(0);" onclick="loadView('analisis-big-data')" id="nav-analisis-big-data">
+            <i class="fas fa-chart-line"></i> Análisis de Big Data
+        </a>
+        <a href="javascript:void(0);" onclick="loadView('monitoreo-iot')" id="nav-monitoreo-iot">
+            <i class="fas fa-signal"></i> Monitoreo Remoto (IoT)
+        </a>
+
+        <div class="separator"></div>
+        
+        <a href="javascript:void(0);" onclick="loadView('configuracion')"><i class="fas fa-cogs"></i> Configuración</a>
+        
+        <a href="javascript:void(0);" onclick="logout()" style="background-color: var(--color-acento); margin: 0 10px; border-radius: 5px; text-align: center;">
+            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </a>
+    </div>
+
+    <div id="contenido-principal">
+        </div>
+</div>
+
+<script>
+    // ***************************************************************
+    // FUNCIONES DE CONTROL
+    // ***************************************************************
+
+    // FUNCIÓN RESPONSIVE: Muestra/Oculta el menú en móviles
+    function toggleMenu() {
+        const menu = document.getElementById('menu-lateral');
+        menu.classList.toggle('active');
+    }
+
+    // ***************************************************************
+    // ROUTER DE VISTAS: Carga el contenido dinámicamente
+    // ***************************************************************
+    async function loadView(viewName) {
+        const contentArea = document.getElementById('contenido-principal');
+        if (!contentArea) return;
+
+        // Resaltar el enlace activo en el menú
+        document.querySelectorAll('#menu-lateral a').forEach(a => a.classList.remove('active-renal'));
+        const activeLink = document.querySelector(`#nav-${viewName}`);
+        if(activeLink) activeLink.classList.add('active-renal');
+
+        // Mostrar un "cargando..."
+        contentArea.innerHTML = `<h2 style="color: var(--color-principal);">Cargando...</h2>`;
+
+        // Cerrar el menú en móvil después de hacer clic
+        if (window.innerWidth <= 768) {
+            toggleMenu();
+        }
+
+        try {
+            let htmlContent = '';
+            switch (viewName) {
+                // --- VISTAS DEL MÓDULO RENAL ---
+                case 'dashboard-ia':
+                    htmlContent = await loadIADashboardView(); 
+                    contentArea.innerHTML = htmlContent;
+                    await updateIADashboardData(); // Llama a la API para llenar los datos
+                    break;
+                case 'analisis-big-data':
+                    htmlContent = `<h1>Análisis Big Data (eGFR vs. Urea)</h1><p>Aquí irán los gráficos avanzados.</p>`;
+                    contentArea.innerHTML = htmlContent;
+                    break;
+                case 'monitoreo-iot':
+                    htmlContent = `<h1>Monitoreo IoT en Tiempo Real</h1><p>Aquí irá el dashboard de telemetría.</p>`;
+                    contentArea.innerHTML = htmlContent;
+                    break;
+                
+                // --- VISTAS COMPARTIDAS (TU LÓGICA EXISTENTE) ---
+                case 'perfil':
+                    htmlContent = await loadPerfilView();
+                    contentArea.innerHTML = htmlContent;
+                    break;
+                case 'citas-pendientes':
+                    htmlContent = await loadCitasPendientesView();
+                    contentArea.innerHTML = htmlContent;
+                    break;
+                case 'configuracion':
+                    htmlContent = `<h1>Configuración del Perfil</h1><p>Aquí irá el formulario para cambiar contraseña, etc.</p>`;
+                    contentArea.innerHTML = htmlContent;
+                    break;
+                
+                // (Añadir 'case' para 'horario', 'citas-aceptadas', 'expediente', 'registrar-visitas')
+                
+                default:
+                    htmlContent = `<h2 style="color: var(--color-acento);">Vista no encontrada</h2>`;
+                    contentArea.innerHTML = htmlContent;
+            }
+        } catch (error) {
+            console.error(`Error al cargar la vista ${viewName}:`, error);
+            contentArea.innerHTML = `<h2 style="color: var(--color-acento);">Error al cargar el contenido.</h2>`;
+        }
+    }
+
+    // ***************************************************************
+    // GENERADORES DE VISTAS (HTML Dinámico)
+    // ***************************************************************
+
+    // 1. VISTA ESPECIALIZADA: Dashboard de IA (SOLO EL ESQUELETO)
+    async function loadIADashboardView() {
+        return `
+            <h1 style="color: var(--color-principal);">Panel de Análisis Predictivo y Big Data</h1>
+            <p style="font-size: 1.1em; color: var(--color-texto-oscuro);">
+                Bienvenido(a) Dr(a). <span id="doctor-name">[Cargando...]</span>. Acceso Especializado de Nefrólogo.
+            </p>
+            
+            <div class="card-grid">
+                <div class="data-card">
+                    <h3>Pacientes en Alerta</h3>
+                    <div class="value" id="total-alerts">-</div>
+                    <p class="subtitle">Requieren acción clínica inmediata.</p>
+                </div>
+                <div class="data-card">
+                    <h3>Promedio de eGFR (Último Mes)</h3>
+                    <div class="value" id="avg-egfr">-</div>
+                    <p class="subtitle">mL/min/1.73m².</p>
+                </div>
+                <div class="data-card">
+                    <h3>Predicción de Uso de Diálisis</h3>
+                    <div class="value" id="dialysis-prediction">-</div>
+                    <p class="subtitle">Nuevos pacientes (próx. trimestre).</p>
+                </div>
+                <div class="data-card">
+                    <h3>Creatinina Promedio (IoT)</h3>
+                    <div class="value" id="avg-creatinine">-</div>
+                    <p class="subtitle">mg/dL (Datos automáticos).</p>
+                </div>
+            </div>
+            
+            <div class="ia-alert-section">
+                <h2><i class="fas fa-radiation"></i> ALERTA CRÍTICA DEL SISTEMA DE IA</h2>
+                <div style="display: flex; align-items: center; margin-top: 20px; flex-wrap: wrap;">
+                    <div class="risk-score" id="top-risk-score" style="font-size: 3em; font-weight: bold; margin-right: 20px;">-</div>
+                    <div>
+                        <p style="margin: 0; font-size: 1.2em; color: var(--color-texto-claro);" id="ia-patient-name">Cargando...</p>
+                        <p style="margin: 5px 0 0; color: var(--color-texto-claro);" id="ia-diagnosis"></p>
+                    </div>
+                </div>
+                <button>
+                    <i class="fas fa-eye"></i> Ver Trazabilidad IoT y Hash de Diagnóstico
+                </button>
+            </div>
+        `;
+    }
+
+    // 2. FUNCIÓN DE LLENADO DE DATOS (Llama al Server)
+    // **ESTA ES LA PARTE ACTUALIZADA**
+    async function updateIADashboardData() {
+        try {
+            // Asumimos que apiFetch está en doctor_logic.js
+            
+            // 1. Cargar nombre del doctor (de la API de doctor existente)
+            const profile = await apiFetch('/api/doctor/profile'); 
+            document.getElementById('doctor-name').textContent = profile.nombre + ' ' + profile.apellido;
+            
+            // 2. Cargar datos del dashboard IA (de la NUEVA API del módulo renal)
+            const data = await apiFetch('/renal/api/dashboard-ia'); 
+            
+            // 3. Llenar las tarjetas con los datos reales del backend
+            document.getElementById('total-alerts').textContent = data.totalAlerts;
+            document.getElementById('avg-egfr').textContent = data.avgEgfr;
+            document.getElementById('dialysis-prediction').textContent = data.dialysisPrediction;
+            document.getElementById('avg-creatinine').textContent = data.avgCreatinine;
+            
+            // 4. Llenar la alerta de IA
+            document.getElementById('top-risk-score').textContent = data.topAlert.riskScore.toFixed(3);
+            document.getElementById('ia-patient-name').textContent = data.topAlert.patientName;
+            document.getElementById('ia-diagnosis').textContent = data.topAlert.diagnosis;
+            
+        } catch (error) {
+            console.error("Error al cargar datos del dashboard IA:", error);
+            if(document.getElementById('contenido-principal')) {
+                document.getElementById('contenido-principal').innerHTML += `<p style="color: red;">Error al conectar con el servidor de IA: ${error.message}</p>`;
+            }
+        }
+    }
+
+    // 3. VISTA COMPARTIDA: Citas Pendientes (Conectada a tu API existente)
+    async function loadCitasPendientesView() {
+        // Llama a la API de citas que YA TIENES en doctor_logic.js
+        const citas = await apiFetch('/api/doctor/citas/pendientes'); 
+
+        let html = `<h1><i class="fas fa-clock"></i> Citas Pendientes</h1>`;
+        if (citas.length === 0) {
+            html += '<table><tbody><tr><td class="empty-table">No hay citas pendientes.</td></tr></tbody></table>';
+            return html;
+        }
+
+        html += '<table><thead><tr><th>Paciente</th><th>Fecha</th><th>Motivo</th><th>Acciones</th></tr></thead><tbody>';
+        
+        citas.forEach(cita => {
+            html += `
+                <tr>
+                    <td>${cita.paciente_nombre} ${cita.paciente_apellido}</td>
+                    <td>${new Date(cita.fecha_hora).toLocaleString()}</td>
+                    <td>${cita.motivo}</td>
+                    <td>
+                        <button class="btn-principal-small" onclick="aceptarCita(${cita.id_cita})">Aceptar</button>
+                        <button class="btn-rojo-small" onclick="rechazarCita(${cita.id_cita})">Rechazar</button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += '</tbody></table>';
+        return html;
+    }
+
+    // 4. VISTA COMPARTIDA: Mi Perfil (Conectada a tu API existente)
+    async function loadPerfilView() {
+        const profile = await apiFetch('/api/doctor/profile'); 
+        return `
+            <h1><i class="fas fa-user-md"></i> Mi Perfil</h1>
+            <div class="data-card" style="background: white; color: var(--color-texto-oscuro);">
+                <h3>Datos Personales</h3>
+                <p><strong>Nombre:</strong> ${profile.nombre} ${profile.apellido}</p>
+                <p><strong>Cédula:</strong> ${profile.cedula}</p>
+                <p><strong>Email:</strong> ${profile.email}</p>
+                
+                <h3>Datos Profesionales</h3>
+                <p><strong>Especialidad:</strong> ${profile.especialidad}</p>
+                <p><strong>ID Colegiatura:</strong> ${profile.id_colegiatura}</p>
+                <p><strong>Estado:</strong> ${profile.estado}</p>
+            </div>
+        `;
+    }
+
+    // ... (Añadir las funciones de generación de HTML para 'horario', 'citas-aceptadas', etc.) ...
+
+
+    // ***************************************************************
+    // INICIALIZACIÓN DEL PANEL
+    // ***************************************************************
+    document.addEventListener('DOMContentLoaded', () => {
+        // Carga la vista por defecto (el Dashboard de IA)
+        loadView('dashboard-ia');
+    });
+
+</script>
+
+<script src="/js/doctor_logic.js"></script>
+
+</body>
+</html>
