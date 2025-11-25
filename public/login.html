@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-g">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ingreso al Sistema | Hospital Dr. Adolfo D'Empaire</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -27,7 +27,7 @@
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: var(--dark-blue); /* <-- FONDO AZUL (Solicitado) */
+            background-color: var(--dark-blue); /* <-- FONDO AZUL */
             color: var(--white);
             display: flex;
             justify-content: center;
@@ -37,29 +37,27 @@
             box-sizing: border-box;
         }
 
-        /* Logo del Hospital (ELIMINADO DEL HTML) */
-        
         /* Contenedor Principal del Formulario */
         .login-container {
-            background-color: var(--white); /* <-- CUADRO BLANCO (Solicitado) */
+            background-color: var(--white); /* <-- CUADRO BLANCO */
             padding: 40px;
             border-radius: 12px;
             box-shadow: 
                 0 15px 30px rgba(0, 0, 0, 0.5), 
-                inset 0 0 20px rgba(0, 0, 0, 0.05); /* Sombra interior suave */
+                inset 0 0 20px rgba(0, 0, 0, 0.05); 
             width: 100%;
             max-width: 450px;
             position: relative; 
-            color: var(--color-texto-oscuro); /* <-- Texto oscuro por defecto */
+            color: var(--color-texto-oscuro);
         }
 
         /* Títulos */
         .login-container h2 {
             text-align: center;
-            color: var(--dark-blue); /* <-- Título azul oscuro */
+            color: var(--dark-blue);
             margin-top: 10px;
             margin-bottom: 25px;
-            text-shadow: none; /* <-- Sin sombra */
+            text-shadow: none;
         }
 
         /* Estilos de los campos de entrada */
@@ -71,18 +69,18 @@
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
-            color: var(--color-texto-oscuro); /* <-- Texto oscuro */
+            color: var(--color-texto-oscuro);
         }
 
         /* Estilo general de inputs y selects */
         input, select {
             width: 100%;
             padding: 12px;
-            border: 1px solid var(--color-borde-input); /* <-- Borde gris */
+            border: 1px solid var(--color-borde-input);
             border-radius: 6px;
             box-sizing: border-box;
-            background-color: var(--color-fondo-input); /* <-- Fondo gris claro */
-            color: var(--color-texto-oscuro); /* <-- Texto oscuro */
+            background-color: var(--color-fondo-input);
+            color: var(--color-texto-oscuro);
             transition: border-color 0.3s;
         }
 
@@ -92,9 +90,8 @@
             box-shadow: 0 0 8px rgba(220, 53, 69, 0.5); 
         }
         
-        /* Placeholder color */
         ::placeholder {
-            color: var(--color-texto-secundario); /* <-- Placeholder gris */
+            color: var(--color-texto-secundario);
             opacity: 0.9;
         }
 
@@ -131,7 +128,7 @@
             right: 12px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--color-texto-secundario); /* <-- Icono gris */
+            color: var(--color-texto-secundario);
             cursor: pointer;
             z-index: 10;
             transition: color 0.2s;
@@ -168,7 +165,7 @@
             top: 20px;
             left: 20px;
             font-size: 28px;
-            color: var(--red-accent); /* <-- Rojo, visible sobre blanco */
+            color: var(--red-accent);
             text-decoration: none;
             cursor: pointer;
             transition: color 0.3s;
@@ -201,10 +198,10 @@
             text-align: center;
             margin-top: 25px;
             font-size: 1em;
-            color: var(--color-texto-secundario); /* <-- Texto gris */
+            color: var(--color-texto-secundario);
         }
         .register-link a {
-            color: var(--dark-blue); /* <-- Enlace azul */
+            color: var(--dark-blue);
             font-weight: bold;
             text-decoration: none;
             transition: color 0.3s;
@@ -220,7 +217,6 @@
                 padding: 30px 20px;
                 width: 100%;
             }
-            /* Regla del logo eliminada */
         }
     </style>
 </head>
@@ -323,11 +319,10 @@
                     const token = data.token;
                     const actualRole = data.rol; 
                     
-                    // --- MODIFICADO: Se elimina el chequeo de rol frontal ---
-                    // (Solicitado: no revelar el rol correcto si se equivoca)
+                    // Verificar que el rol seleccionado coincida con el rol real
                     if (actualRole !== selectedRole) {
                          messageArea.className = 'message error';
-                         // (Solicitado: mensaje genérico)
+                         // Mensaje genérico de seguridad
                          messageArea.textContent = 'Cédula o contraseña incorrecta.';
                          messageArea.style.display = 'block';
                          return; 
@@ -338,55 +333,34 @@
                     localStorage.setItem('user_name', actualRole); 
 
                     messageArea.className = 'message success';
-                    
-                    // --- NUEVA FRASE DE ÉXITO (Solicitado) ---
                     messageArea.textContent = `¡Ingreso exitoso como ${actualRole}!`; 
                     messageArea.style.display = 'block';
 
-                   // ... (resto de la lógica) ...
-
                     let redirectUrl = '';
                     
-                    // --- INICIO DE LA CORRECCIÓN ---
+                    // --- Lógica de redirección corregida (Sin Nefrología) ---
                     switch (actualRole) {
                         case 'Administrador':
                             redirectUrl = 'admin.html';
                             break;
-                        
                         case 'Doctor':
-                            // Verificamos la especialidad que ahora envía el server
-                            if (data.especialidad === 'Nefrología') {
-                                // 1. Es Doctor Y Nefrólogo -> Va al panel nuevo
-                                redirectUrl = 'doctor_nefrologo.html';
-                            } else {
-                                // 2. Es Doctor (pero no Nefrólogo) -> Va al panel viejo
-                                redirectUrl = 'doctor.html';
-                            }
+                            // Todos los doctores van al panel general
+                            redirectUrl = 'doctor.html';
                             break;
-                        
                         case 'Paciente':
                             redirectUrl = 'paciente.html';
                             break;
-                        
                         default:
                             redirectUrl = 'index.html'; 
                     }
-                    // --- FIN DE LA CORRECCIÓN ---
 
                     setTimeout(() => {
                         window.location.href = redirectUrl;
                     }, 1500); 
 
                 } else {
-                    // ... (manejo de error) ...
-
-                    setTimeout(() => {
-                        window.location.href = redirectUrl;
-                    }, 1500); 
-
-                } else {
+                    // Manejo de error si response.ok es falso (ej. 401, 404)
                     messageArea.className = 'message error';
-                    // --- NUEVO MENSAJE DE ERROR (Solicitado) ---
                     messageArea.textContent = 'Cédula o contraseña incorrecta.';
                     messageArea.style.display = 'block';
                 }
@@ -400,5 +374,4 @@
         });
     </script>
 </body>
-
 </html>
