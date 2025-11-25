@@ -43,17 +43,6 @@ app.use(express.json());
 // Clave Secreta para JWT (¡CÁMBIALA EN PRODUCCIÓN!)
 const jwtSecret = process.env.JWT_SECRET || 'SUPER_CLAVE_SECRETA_HOSPITAL_2025';
 
-// ***************************************************************
-// -> AÑADIR ESTO: CONEXIÓN DEL MÓDULO RENAL INTELIGENTE
-// ***************************************************************
-
-// 1. Servir los archivos estáticos (HTML/CSS) del nuevo módulo
-// Esto permite que el navegador acceda a los HTML de /public_renal
-app.use(express.static(path.join(__dirname, 'public_renal'))); 
-
-// 2. Conectar las rutas del módulo bajo el prefijo '/renal'
-// Todas las peticiones a /renal/... irán a tu archivo renal_routes.js
-app.use('/renal', renalRoutes);
 
 
 
@@ -3357,11 +3346,6 @@ app.get('/api/admin/camas/quirofano', auth(['Administrador']), async (req, res) 
 
 
 
-// ==============================================================================
-// EXPORTACIONES PARA MÓDULOS (NECESARIO PARA EL MÓDULO RENAL)
-// ==============================================================================
-module.exports = { pool, auth };
-
 
 
 
@@ -3380,6 +3364,7 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
 
 
 
