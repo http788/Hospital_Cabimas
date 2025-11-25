@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Doctor - Hospital Dr. Adolfo D' Empaire</title>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
     <style>
+        /* --- ESTILOS CSS --- */
         :root {
             --color-principal: #0D47A1;
             --color-acento: #D32F2F;
@@ -20,7 +22,7 @@
         body { font-family: 'Arial', sans-serif; background-color: var(--color-fondo); margin: 0; }
         #doctor-wrapper { display: flex; min-height: 100vh; }
         
-        /* --- ESTILOS RESPONSIVE (MENÚ HAMBURGUESA) --- */
+        /* Sidebar */
         #sidebar {
             width: 250px;
             background: linear-gradient(180deg, var(--color-principal) 0%, #003366 100%);
@@ -31,307 +33,71 @@
             transition: margin-left 0.3s ease-out;
             z-index: 100;
         }
-        #sidebar h2 { 
-            text-align: center; margin-bottom: 10px; padding: 0 15px;
-            color: var(--color-texto-claro);
-        }
-        #sidebar #doctor-info {
-            text-align: center; padding: 0 15px; margin-bottom: 20px;
-            border-bottom: 2px solid var(--color-acento); padding-bottom: 20px;
-        }
+        #sidebar h2 { text-align: center; margin-bottom: 10px; padding: 0 15px; color: var(--color-texto-claro); }
+        #sidebar #doctor-info { text-align: center; padding: 0 15px; margin-bottom: 20px; border-bottom: 2px solid var(--color-acento); padding-bottom: 20px; }
         #sidebar #doctor-name { font-size: 1.1em; font-weight: bold; }
         #sidebar #doctor-spec { font-size: 0.9em; color: #bbdefb; }
         
         #sidebar a {
             display: flex; align-items: center; padding: 15px 20px;
             color: var(--color-texto-claro); text-decoration: none;
-            transition: background 0.3s, box-shadow 0.3s; 
-            font-weight: bold;
+            transition: background 0.3s, box-shadow 0.3s; font-weight: bold;
             border-left: 5px solid transparent;
         }
-        #sidebar a i { margin-right: 15px; width: 20px; }
-        #sidebar a:hover {
-            background-color: #1565C0; 
-        }
-        #sidebar a.active {
-            background-color: #1976D2;
-            border-left: 5px solid var(--color-acento);
-            box-shadow: inset 3px 0 8px rgba(0,0,0,0.2); 
-        }
+        #sidebar a:hover { background-color: #1565C0; }
+        #sidebar a.active { background-color: #1976D2; border-left: 5px solid var(--color-acento); box-shadow: inset 3px 0 8px rgba(0,0,0,0.2); }
         .logout-menu-item { background-color: #8D021F !important; margin-top: 30px;}
         .logout-menu-item:hover { background-color: var(--color-acento) !important; }
 
         /* Contenido Principal */
-        #main-content {
-            flex-grow: 1;
-            padding: 40px;
-            padding-top: 80px; 
-        }
-        #main-content h1 { 
-            color: var(--color-principal); margin-bottom: 25px; 
-            border-bottom: 2px solid var(--color-acento); padding-bottom: 10px;
-        }
+        #main-content { flex-grow: 1; padding: 40px; padding-top: 80px; }
+        #main-content h1 { color: var(--color-principal); margin-bottom: 25px; border-bottom: 2px solid var(--color-acento); padding-bottom: 10px; }
         
-        /* Header Fijo para Móvil (Botón Hamburguesa) */
-        .header-mobile {
-            display: none; 
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: white;
-            padding: 15px 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* Sombra 3D más pronunciada */
-            z-index: 90;
-            align-items: center;
-        }
-        .menu-toggle {
-            font-size: 1.8em;
-            cursor: pointer;
-            color: var(--color-principal); 
-            margin-right: 15px;
-        }
-        .header-mobile h1 {
-            font-size: 1.3em;
-            color: var(--color-principal);
-            margin: 0;
-        }
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 99;
-            display: none; 
-        }
+        /* Header Móvil */
+        .header-mobile { display: none; position: fixed; top: 0; left: 0; width: 100%; background: white; padding: 15px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); z-index: 90; align-items: center; }
+        .menu-toggle { font-size: 1.8em; cursor: pointer; color: var(--color-principal); margin-right: 15px; }
+        .header-mobile h1 { font-size: 1.3em; color: var(--color-principal); margin: 0; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 99; display: none; }
 
         @media (max-width: 900px) {
-            #sidebar {
-                position: fixed;
-                height: 100%;
-                margin-left: -250px; 
-            }
-            #sidebar.open {
-                margin-left: 0; 
-            }
-            .header-mobile {
-                display: flex;
-            }
-            #main-content {
-                padding: 20px;
-                padding-top: 90px;
-            }
-            .overlay.open {
-                display: block;
-            }
-            .form-grid-vitals {
-                grid-template-columns: 1fr 1fr !important; 
-            }
+            #sidebar { position: fixed; height: 100%; margin-left: -250px; }
+            #sidebar.open { margin-left: 0; }
+            .header-mobile { display: flex; }
+            #main-content { padding: 20px; padding-top: 90px; }
+            .overlay.open { display: block; }
+            .form-grid-vitals { grid-template-columns: 1fr 1fr !important; }
         }
         
-        /* Botones, Tablas y Formularios */
-        .btn-rojo, .btn-principal, .btn-submit-presc {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px; 
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1em;
-            text-decoration: none;
-            display: inline-block;
-            border-bottom: 3px solid rgba(0, 0, 0, 0.2);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-            transition: all 0.15s ease-out;
-            transform: translateY(0);
-        }
-        .btn-rojo {
-            background-color: var(--color-acento);
-            color: var(--color-texto-claro);
-        }
-        .btn-principal {
-            background-color: var(--color-principal);
-            color: var(--color-texto-claro);
-            margin-right: 5px;
-        }
-        
-        .btn-rojo:hover, .btn-principal:hover, .btn-submit-presc:hover {
-            transform: translateY(-2px); 
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
-        .btn-rojo:active, .btn-principal:active, .btn-submit-presc:active {
-            transform: translateY(1px); 
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            border-bottom-width: 1px;
-        }
-        
-        /* Botones pequeños para tablas */
-        .btn-rojo-small, .btn-principal-small {
-            padding: 5px 8px;
-            font-size: 0.9em;
-            border-radius: 5px;
-            border-bottom-width: 2px;
-        }
+        /* Botones y Tablas */
+        .btn-rojo, .btn-principal, .btn-submit-presc { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; display: inline-block; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: transform 0.1s; }
+        .btn-rojo { background-color: var(--color-acento); }
+        .btn-principal { background-color: var(--color-principal); margin-right: 5px; }
+        .btn-rojo:hover, .btn-principal:hover { transform: translateY(-2px); }
+        .btn-rojo-small, .btn-principal-small { padding: 5px 8px; font-size: 0.9em; border-radius: 5px; }
 
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 20px; 
-            background-color: white; 
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05); /* Sombra 3D suave */
-            border-radius: 8px;
-            overflow: hidden; 
-        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 8px 16px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: var(--color-principal); color: var(--color-texto-claro); }
-        tr:hover { background-color: #f1f1f1; }
         .empty-table { text-align: center; color: #777; font-style: italic; padding: 20px; }
         
-        /* Estilos de Formulario (Elegante/3D) */
-        .form-container {
-            background: white; padding: 30px; border-radius: 10px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
-            border: 1px solid #e0e0e0;
-            max-width: 800px;
-        }
-        .form-container h3 {
-             color: var(--color-principal);
-             border-bottom: 2px solid var(--color-fondo);
-             padding-bottom: 8px;
-             margin-top: 15px;
-             margin-bottom: 20px;
-        }
-         .form-container h3:first-of-type {
-             margin-top: 0;
-         }
-        .form-container label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        .form-container input[type="text"],
-        .form-container input[type="email"],
-        .form-container input[type="password"],
-        .form-container input[type="number"],
-        .form-container input[type="date"],
-        .form-container select,
-        .form-container textarea {
-            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc;
-            border-radius: 6px; box-sizing: border-box; font-size: 1em;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .form-container button, .btn-submit-presc {
-            margin-top: 15px;
-            font-size: 1.1em;
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        .form-grid-vitals {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr; /* 3 columnas */
-            gap: 15px;
-        }
+        /* Formularios */
+        .form-container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; max-width: 800px; }
+        .form-container h3 { color: var(--color-principal); border-bottom: 2px solid var(--color-fondo); padding-bottom: 8px; margin-top: 15px; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .form-grid-vitals { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .presc-line-item { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 10px 15px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #eee; }
 
-        /* Estilos de Prescripción */
-        .presc-line-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f9f9f9;
-            padding: 10px 15px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border: 1px solid #eee;
-        }
-        .presc-line-item div { flex: 1; }
-        .presc-line-item strong { color: var(--color-principal); display: block; font-size: 1.1em;}
-
-
-        /* Modal (Pop-up) con efecto 3D */
-        #modal-backdrop {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); z-index: 1000;
-            display: none; justify-content: center; align-items: center;
-        }
-        #modal-content {
-            background: white; padding: 30px; border-radius: 10px;
-            width: 90%; max-width: 600px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            animation: fadeIn 0.3s ease-out;
-            max-height: 80vh; 
-            overflow-y: auto;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        #modal-content h2 { color: var(--color-principal); margin-top: 0; }
-        #modal-body p {
-            margin: 5px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;
-            font-size: 1.1em;
-        }
-        #modal-body h3 {
-             color: var(--color-principal); margin-top: 20px; 
-             border-bottom: 1px solid #ccc; padding-bottom: 5px;
-        }
-         #modal-body h3:first-of-type {
-             margin-top: 0;
-         }
-        #modal-body h3 i {
-            margin-right: 8px;
-        }
-        #modal-body p strong { 
-            color: var(--color-texto-oscuro); 
-            min-width: 150px; 
-            display: inline-block;
-        }
-        #modal-body h3.emergencia {
-             color: var(--color-acento);
-        }
+        /* Modal */
+        #modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        #modal-content { background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
+        #modal-footer { text-align: right; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
         
-        /* --- NUEVO: Estilos para Footer del Modal --- */
-        #modal-footer {
-            text-align: right; 
-            margin-top: 20px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-        
-        /* Estilos para el Perfil (Elegante) */
-        .data-group p {
-            font-size: 1.1em; margin: 10px 0;
-        }
-        .data-group p strong {
-             color: var(--color-texto-oscuro);
-        }
-        .data-group h3 {
-            color: var(--color-principal); border-bottom: 1px solid #eee; 
-            padding-bottom: 10px; margin-top:0;
-        }
-        
-        /* Notificación Profesional (Toast) - Elegante */
-        #toast-notification {
-            position: fixed;
-            bottom: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            padding: 16px 24px;
-            border-radius: 50px; /* Forma de píldora */
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 2000;
-            transition: bottom 0.5s ease-in-out;
-            font-weight: 500; /* Más suave que bold */
-        }
-        #toast-notification.show {
-            bottom: 30px;
-        }
-        #toast-notification.success {
-            background-color: #28A745;
-        }
-        #toast-notification.error {
-            background-color: var(--color-acento);
-        }
+        /* Toast */
+        #toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); color: white; padding: 16px 24px; border-radius: 50px; z-index: 2000; transition: bottom 0.5s; font-weight: 500; }
+        #toast-notification.show { bottom: 30px; }
+        #toast-notification.success { background-color: #28A745; }
+        #toast-notification.error { background-color: var(--color-acento); }
     </style>
 </head>
 <body>
@@ -344,93 +110,513 @@
     <div id="doctor-wrapper">
         <div id="sidebar">
             <h2><i class="fas fa-user-md"></i> Panel de Doctor</h2>
-            
             <div id="doctor-info">
                 <div id="doctor-name">Cargando...</div>
                 <div id="doctor-spec">Cargando...</div>
             </div>
             
-            <a href="#" data-section="mi-perfil" class="active">
-                <i class="fas fa-user-circle"></i> Mi Perfil
-            </a>
-            <a href="#" data-section="horario">
-                <i class="fas fa-calendar-alt"></i> Mi Horario
-            </a>
+            <a href="#" data-section="mi-perfil" class="active"><i class="fas fa-user-circle"></i> Mi Perfil</a>
+            <a href="#" data-section="horario"><i class="fas fa-calendar-alt"></i> Mi Horario</a>
             <a href="#" data-section="citas-pendientes">
                 <i class="fas fa-clock"></i> Citas Pendientes
                 <span id="citas-badge" style="background: var(--color-acento); border-radius: 50%; padding: 2px 8px; font-size: 0.8em; margin-left: auto;">0</span>
             </a>
-            <a href="#" data-section="citas-aceptadas">
-                <i class="fas fa-calendar-check"></i> Citas Aceptadas
-            </a>
-            <a href="#" data-section="registrar-visita">
-                <i class="fas fa-file-medical"></i> Registrar Visita
-            </a>
-            <a href="expediente.html">
-                <i class="fas fa-book-medical"></i> Expediente Clínico
-            </a>
+            <a href="#" data-section="citas-aceptadas"><i class="fas fa-calendar-check"></i> Citas Aceptadas</a>
+            <a href="#" data-section="registrar-visita"><i class="fas fa-file-medical"></i> Registrar Visita</a>
+            <a href="expediente.html"><i class="fas fa-book-medical"></i> Expediente Clínico</a>
             
             <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
-            <a href="#" data-section="configuracion">
-                <i class="fas fa-cog"></i> Configuración
-            </a>
-            
-            <a href="#" class="logout-menu-item" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-            </a>
-            </div>
+            <a href="#" data-section="configuracion"><i class="fas fa-cog"></i> Configuración</a>
+            <a href="#" class="logout-menu-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+        </div>
 
         <div id="main-content">
-            <div id="content-area">
-                </div>
+            <div id="content-area"></div>
         </div>
     </div>
 
     <div id="modal-backdrop" onclick="closeModal()">
         <div id="modal-content" onclick="event.stopPropagation();">
             <h2 id="modal-title">Detalle</h2>
-            <div id="modal-body">
-                </div>
+            <div id="modal-body"></div>
             <div id="modal-footer">
                 <button class="btn-principal" id="modal-btn-cancel" onclick="closeModal()">Cancelar</button>
                 <button class="btn-rojo" id="modal-btn-confirm">Aceptar</button>
             </div>
-            </div>
+        </div>
     </div>
-    
     <div id="toast-notification">Mensaje</div>
-    
     <div class="overlay" onclick="toggleMenu()"></div>
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-<script src="/js/doctor_logic.js"></script>
 
+    <script>
+        // --- INICIALIZACIÓN DE LIBRERÍA PDF ---
+        const { jsPDF } = window.jspdf;
+
+        const API_BASE = 'http://localhost:3000/api/doctor'; // Cambia esto si tu puerto es diferente
+        const contentArea = document.getElementById('content-area');
+        let doctorProfileData = null; 
+        let currentPrescriptionLines = []; 
+        
+        // --- ELEMENTOS MODAL ---
+        const modal = document.getElementById('modal-backdrop');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalFooter = document.getElementById('modal-footer');
+        const modalBtnConfirm = document.getElementById('modal-btn-confirm');
+        const modalBtnCancel = document.getElementById('modal-btn-cancel');
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+        
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.querySelector('.overlay').classList.toggle('open');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast-notification');
+            toast.textContent = message;
+            toast.className = 'show'; 
+            if (type === 'error') toast.classList.add('error');
+            else toast.classList.add('success');
+            setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+        }
+
+        // --- FETCH GENÉRICO ---
+        async function apiFetch(endpoint, options = {}) {
+            const token = localStorage.getItem('token');
+            const defaultHeaders = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers: { ...defaultHeaders, ...options.headers }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                     showToast('Sesión expirada.', 'error');
+                     setTimeout(logout, 1500);
+                     throw new Error('Unauthorized');
+                }
+                
+                const contentType = response.headers.get("content-type");
+                let result;
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    result = await response.json();
+                } else {
+                    result = { message: await response.text() };
+                }
+
+                if (!response.ok) throw new Error(result.msg || result.message || `Error de API`);
+                return result;
+            } catch (error) {
+                if (error.message !== 'Unauthorized') {
+                    console.error(`Error API:`, error);
+                    showToast(`Error: ${error.message}`, 'error');
+                }
+                throw error; 
+            }
+        }
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const userRole = localStorage.getItem('rol');
+            
+            if (!token || userRole !== 'Doctor') {
+                showToast('Acceso Denegado.', 'error');
+                setTimeout(logout, 1500);
+                return;
+            }
+            
+            loadDoctorProfile(); 
+            
+            const urlHash = window.location.hash.substring(1); 
+            if (urlHash && document.querySelector(`#sidebar a[data-section="${urlHash}"]`)) {
+                loadSection(urlHash);
+                updateActiveLink(urlHash);
+            } else {
+                loadSection('mi-perfil'); 
+            }
+            
+            document.querySelectorAll('#sidebar a').forEach(link => {
+                if (link.getAttribute('href') && link.getAttribute('href').includes('.html')) return; // Ignora links externos
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (e.currentTarget.classList.contains('logout-menu-item')) return;
+                    const section = e.currentTarget.getAttribute('data-section');
+                    updateActiveLink(section);
+                    loadSection(section);
+                    if (window.innerWidth <= 900) toggleMenu();
+                });
+            });
+        });
+
+        function updateActiveLink(section) {
+            document.querySelectorAll('#sidebar a').forEach(l => l.classList.remove('active'));
+            const activeLink = document.querySelector(`#sidebar a[data-section="${section}"]`);
+            if(activeLink) activeLink.classList.add('active');
+        }
+
+        async function loadDoctorProfile() {
+            try {
+                const perfil = await apiFetch('/perfil');
+                doctorProfileData = perfil; 
+                document.getElementById('doctor-name').textContent = `${perfil.nombre} ${perfil.apellido}`;
+                document.getElementById('doctor-spec').textContent = perfil.especialidad;
+                updatePendingCitasBadge();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function updatePendingCitasBadge() {
+            try {
+                const citas = await apiFetch('/citas/pendientes');
+                document.getElementById('citas-badge').textContent = citas.length;
+            } catch (error) {
+                document.getElementById('citas-badge').textContent = '!'; 
+            }
+        }
+
+        async function loadSection(section) {
+            contentArea.innerHTML = `<h1>Cargando...</h1>`;
+            // Actualizar título móvil
+            const link = document.querySelector(`#sidebar a[data-section="${section}"]`);
+            if(link) document.getElementById('mobile-header-title').innerText = link.innerText.replace(/[0-9]/g, '').trim();
+
+            try {
+                switch (section) {
+                    case 'mi-perfil': await loadMiPerfil(); break; 
+                    case 'registrar-visita': await loadRegistrarVisita(); break; 
+                    case 'citas-pendientes': await loadCitasPendientes(); break;
+                    case 'citas-aceptadas': await loadCitasAceptadas(); break;
+                    case 'horario': await loadHorario(); break;
+                    case 'configuracion': await loadConfiguracion(); break;
+                    default: contentArea.innerHTML = '<h1>Sección no encontrada.</h1>';
+                }
+            } catch (error) {
+                 console.warn("Error cargando sección");
+            }
+        }
+
+        // --- SECCIONES ---
+
+        async function loadMiPerfil() {
+            if (!doctorProfileData) await loadDoctorProfile();
+            const perfil = doctorProfileData || {};
+            
+            let estadoBadge = `<span style="color: #28A745; background: #e9f7eb; padding: 5px 10px; border-radius: 15px;">${perfil.estado}</span>`;
+            if (perfil.estado !== 'Activo') estadoBadge = `<span style="color: #DC3545; background: #fbe9e7; padding: 5px 10px; border-radius: 15px;">${perfil.estado}</span>`;
+
+            contentArea.innerHTML = `
+                <h1><i class="fas fa-user-circle"></i> Mi Perfil Profesional</h1>
+                <div class="form-container" style="max-width:100%">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;">
+                        <div class="data-group">
+                            <h3><i class="fas fa-user"></i> Datos Personales</h3>
+                            <p><strong>Nombre:</strong> ${perfil.nombre} ${perfil.apellido}</p>
+                            <p><strong>Cédula:</strong> ${perfil.cedula}</p>
+                            <p><strong>Email:</strong> ${perfil.email}</p>
+                        </div>
+                        <div class="data-group">
+                            <h3><i class="fas fa-briefcase-medical"></i> Datos Profesionales</h3>
+                            <p><strong>Especialidad:</strong> ${perfil.especialidad}</p>
+                            <p><strong>ID Colegiatura:</strong> ${perfil.id_colegiatura}</p>
+                            <p><strong>Estado:</strong> ${estadoBadge}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadCitasPendientes() {
+            const citas = await apiFetch('/citas/pendientes');
+            let html = `<h1><i class="fas fa-clock"></i> Citas Pendientes</h1>`;
+            if (citas.length === 0) html += '<p class="empty-table">No tiene citas pendientes.</p>';
+            else {
+                html += `<table><thead><tr><th>Paciente</th><th>Fecha</th><th>Motivo</th><th>Acciones</th></tr></thead><tbody>`;
+                citas.forEach(cita => {
+                    html += `<tr>
+                        <td>${cita.paciente_nombre} ${cita.paciente_apellido}</td>
+                        <td>${new Date(cita.fecha_hora).toLocaleString('es-VE')}</td>
+                        <td>${cita.motivo}</td>
+                        <td>
+                            <button class="btn-principal btn-principal-small" onclick="handleCitaAction(${cita.id_cita}, 'Aceptada')">Aceptar</button>
+                            <button class="btn-rojo btn-rojo-small" onclick="handleCitaAction(${cita.id_cita}, 'Rechazada')">Rechazar</button>
+                        </td></tr>`;
+                });
+                html += `</tbody></table>`;
+            }
+            contentArea.innerHTML = html;
+        }
+
+        async function handleCitaAction(id_cita, nuevo_estado) {
+            openConfirmModal(`Confirmar ${nuevo_estado}`, `¿Seguro de cambiar estado?`, async () => {
+                try {
+                    await apiFetch(`/citas/${id_cita}`, { method: 'PUT', body: JSON.stringify({ nuevo_estado }) });
+                    showToast(`Cita ${nuevo_estado}`, 'success');
+                    loadCitasPendientes();
+                    updatePendingCitasBadge();
+                } catch (e) { showToast(e.message, 'error'); }
+            });
+        }
+
+        async function loadCitasAceptadas() {
+            const citas = await apiFetch('/citas/aceptadas');
+            let html = `<h1><i class="fas fa-calendar-check"></i> Citas Aceptadas</h1>`;
+            if (citas.length === 0) html += '<p class="empty-table">No hay citas aceptadas.</p>';
+            else {
+                html += `<table><thead><tr><th>Paciente</th><th>Fecha</th><th>Motivo</th><th>Acción</th></tr></thead><tbody>`;
+                citas.forEach(cita => {
+                    html += `<tr>
+                        <td>${cita.paciente_nombre} ${cita.paciente_apellido}</td>
+                        <td>${new Date(cita.fecha_hora).toLocaleString('es-VE')}</td>
+                        <td>${cita.motivo}</td>
+                        <td><button class="btn-principal btn-principal-small" onclick="viewAntecedentes(${cita.id_paciente}, '${cita.paciente_nombre}')">Ver Historial</button></td>
+                    </tr>`;
+                });
+                html += `</tbody></table>`;
+            }
+            contentArea.innerHTML = html;
+        }
+
+        async function loadHorario() {
+            const horario = await apiFetch('/horario');
+            let html = `<h1><i class="fas fa-calendar-alt"></i> Horario</h1>
+                <form id="horario-form" class="form-container">
+                    <h3>Nuevo Día</h3>
+                    <div class="form-grid">
+                        <select id="dia_semana" required>
+                            <option value="Lunes">Lunes</option><option value="Martes">Martes</option><option value="Miércoles">Miércoles</option>
+                            <option value="Jueves">Jueves</option><option value="Viernes">Viernes</option><option value="Sábado">Sábado</option><option value="Domingo">Domingo</option>
+                        </select>
+                        <div><input type="time" id="hora_inicio" required> a <input type="time" id="hora_fin" required></div>
+                    </div>
+                    <button type="submit" class="btn-principal">Guardar</button>
+                </form>
+                <h3>Registrado</h3>
+                <table><thead><tr><th>Día</th><th>Inicio</th><th>Fin</th><th>Acción</th></tr></thead><tbody>`;
+            
+            if(horario.length === 0) html += '<tr><td colspan="4" class="empty-table">Vacío</td></tr>';
+            else {
+                const orden = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+                horario.sort((a,b) => orden.indexOf(a.dia_semana) - orden.indexOf(b.dia_semana));
+                horario.forEach(dia => {
+                    html += `<tr><td>${dia.dia_semana}</td><td>${dia.hora_inicio}</td><td>${dia.hora_fin}</td>
+                    <td><button class="btn-rojo btn-rojo-small" onclick="handleDeleteHorario(${dia.id_horario})"><i class="fas fa-trash"></i></button></td></tr>`;
+                });
+            }
+            html += `</tbody></table>`;
+            contentArea.innerHTML = html;
+            document.getElementById('horario-form').addEventListener('submit', handleSaveHorario);
+        }
+
+        async function handleSaveHorario(e) {
+            e.preventDefault();
+            try {
+                await apiFetch('/horario', { method: 'POST', body: JSON.stringify({
+                    dia_semana: document.getElementById('dia_semana').value,
+                    hora_inicio: document.getElementById('hora_inicio').value,
+                    hora_fin: document.getElementById('hora_fin').value
+                })});
+                showToast('Guardado', 'success');
+                loadHorario();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function handleDeleteHorario(id) {
+            openConfirmModal('Eliminar', '¿Seguro?', async () => {
+                try { await apiFetch(`/horario/${id}`, { method: 'DELETE' }); showToast('Eliminado', 'success'); loadHorario(); }
+                catch(e) { showToast(e.message, 'error'); }
+            });
+        }
+
+        async function loadConfiguracion() {
+            const { email, telefono } = doctorProfileData || {};
+            contentArea.innerHTML = `<h1>Configuración</h1>
+                <div class="form-container">
+                    <form id="config-form">
+                        <label>Email:</label><input type="email" name="new_email" value="${email || ''}">
+                        <label>Teléfono:</label><input type="text" name="new_telefono" value="${telefono || ''}">
+                        <hr>
+                        <label>Contraseña Actual:</label><input type="password" name="contrasena_actual" required>
+                        <label>Nueva Contraseña:</label><input type="password" name="nueva_contrasena">
+                        <button type="submit" class="btn-principal">Actualizar</button>
+                    </form>
+                </div>`;
+            document.getElementById('config-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                try {
+                    const res = await apiFetch('/actualizar-usuario', { method: 'PUT', body: JSON.stringify({
+                        email: form.new_email.value || undefined,
+                        telefono: form.new_telefono.value || undefined,
+                        contrasena_actual: form.contrasena_actual.value,
+                        nueva_contrasena: form.nueva_contrasena.value || undefined
+                    })});
+                    showToast(res.message, 'success');
+                    if(res.requires_relogin) setTimeout(logout, 2000);
+                } catch (e) { showToast(e.message, 'error'); }
+            });
+        }
+
+        async function loadRegistrarVisita() {
+            currentPrescriptionLines = [];
+            contentArea.innerHTML = `
+                <h1><i class="fas fa-file-medical"></i> Registrar Visita</h1>
+                <div class="form-container" style="max-width:100%">
+                    <form id="consulta-form">
+                        <h3>Paciente</h3>
+                        <select id="consulta-paciente" required><option value="">Cargando...</option></select>
+                        <h3>Evolución</h3>
+                        <textarea id="consulta-motivo" placeholder="Motivo" required></textarea>
+                        <input type="text" id="consulta-diagnostico" placeholder="Diagnóstico" required>
+                        <textarea id="consulta-notas" placeholder="Notas SOAP"></textarea>
+                        <h3>Signos Vitales</h3>
+                        <div class="form-grid-vitals">
+                            <input type="text" id="vital-presion" placeholder="PA (mmHg)">
+                            <input type="number" id="vital-glicemia" placeholder="Glicemia">
+                            <input type="number" id="vital-saturacion" placeholder="Sat O2">
+                            <input type="number" id="vital-temperatura" placeholder="Temp" step="0.1">
+                            <input type="number" id="vital-peso" placeholder="Peso" step="0.1">
+                            <input type="number" id="vital-talla" placeholder="Talla">
+                        </div>
+                        <hr>
+                        <h3>Récipē (Opcional)</h3>
+                        <div id="presc-list"></div>
+                        <div style="background:#f9f9f9; padding:10px; border-radius:5px;">
+                            <div class="form-grid">
+                                <input type="text" id="med-nom" placeholder="Medicamento">
+                                <input type="text" id="med-dos" placeholder="Dosis">
+                                <input type="text" id="med-fre" placeholder="Frecuencia">
+                                <input type="text" id="med-dur" placeholder="Duración">
+                            </div>
+                            <button type="button" class="btn-principal" onclick="addMed()">+ Agregar</button>
+                        </div>
+                        <textarea id="presc-obs" placeholder="Indicaciones Récipē"></textarea>
+                        <button type="submit" class="btn-submit-presc">Guardar</button>
+                    </form>
+                </div>`;
+            
+            try {
+                const pacs = await apiFetch('/pacientes');
+                const sel = document.getElementById('consulta-paciente');
+                sel.innerHTML = '<option value="">Seleccione...</option>';
+                pacs.forEach(p => sel.innerHTML += `<option value="${p.id_paciente}" data-n="${p.nombre} ${p.apellido}" data-c="${p.cedula}">${p.apellido}, ${p.nombre} (${p.cedula})</option>`);
+            } catch(e) {}
+
+            document.getElementById('consulta-form').addEventListener('submit', handleSaveConsulta);
+        }
+
+        function addMed() {
+            const n = document.getElementById('med-nom').value, d = document.getElementById('med-dos').value;
+            if(!n || !d) return showToast('Falta nombre/dosis', 'error');
+            currentPrescriptionLines.push({ 
+                nombre_medicamento: n, dosis: d, 
+                frecuencia: document.getElementById('med-fre').value, 
+                duracion: document.getElementById('med-dur').value 
+            });
+            renderMeds();
+            document.getElementById('med-nom').value = '';
+            document.getElementById('med-dos').value = '';
+        }
+
+        function renderMeds() {
+            const d = document.getElementById('presc-list');
+            d.innerHTML = '';
+            currentPrescriptionLines.forEach((l, i) => {
+                d.innerHTML += `<div class="presc-line-item"><strong>${i+1}. ${l.nombre_medicamento}</strong> (${l.dosis}) <i class="fas fa-trash" style="cursor:pointer;color:red" onclick="currentPrescriptionLines.splice(${i},1);renderMeds()"></i></div>`;
+            });
+        }
+
+        async function handleSaveConsulta(e) {
+            e.preventDefault();
+            const sel = document.getElementById('consulta-paciente');
+            const opt = sel.options[sel.selectedIndex];
+            const data = {
+                fk_paciente: sel.value,
+                motivo_consulta: document.getElementById('consulta-motivo').value,
+                diagnostico: document.getElementById('consulta-diagnostico').value,
+                notas_evolucion: document.getElementById('consulta-notas').value,
+                presion_arterial: document.getElementById('vital-presion').value,
+                glicemia: document.getElementById('vital-glicemia').value,
+                saturacion_oxigeno: document.getElementById('vital-saturacion').value,
+                temperatura_c: document.getElementById('vital-temperatura').value,
+                peso_kg: document.getElementById('vital-peso').value,
+                talla_cm: document.getElementById('vital-talla').value,
+                observaciones_prescripcion: document.getElementById('presc-obs').value,
+                medicamentos: currentPrescriptionLines
+            };
+
+            try {
+                const res = await apiFetch('/consulta-completa', { method: 'POST', body: JSON.stringify(data) });
+                showToast(res.message, 'success');
+                if(currentPrescriptionLines.length > 0 && res.id_prescripcion) {
+                    generatePDF(opt.getAttribute('data-n'), opt.getAttribute('data-c'), data, res.id_prescripcion);
+                }
+                loadRegistrarVisita();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        function generatePDF(pacName, pacCed, data, idRec) {
+            if(!doctorProfileData) return;
+            const doc = new jsPDF();
+            const dr = doctorProfileData;
+            doc.setFontSize(16); doc.text("Hospital General Dr. Adolfo D' Empaire", 105, 20, {align:'center'});
+            doc.setFontSize(12); doc.text(`Dr. ${dr.nombre} ${dr.apellido} - ${dr.especialidad}`, 105, 30, {align:'center'});
+            doc.line(20, 35, 190, 35);
+            doc.text(`Paciente: ${pacName}`, 20, 45);
+            doc.text(`C.I: ${pacCed}`, 140, 45);
+            doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 140, 52);
+            doc.text(`ID: ${idRec}`, 20, 52);
+            doc.setFontSize(14); doc.text("Récipē (Rx)", 20, 65);
+            
+            let y = 75;
+            data.medicamentos.forEach((m, i) => {
+                doc.setFontSize(12); doc.text(`${i+1}. ${m.nombre_medicamento}`, 25, y);
+                doc.setFontSize(10); doc.text(`   ${m.dosis} | ${m.frecuencia} | ${m.duracion}`, 25, y+5);
+                y += 15;
+            });
+            if(data.observaciones_prescripcion) doc.text("Nota: " + data.observaciones_prescripcion, 20, y+10, {maxWidth:170});
+            doc.save(`Recipe_${pacCed}.pdf`);
+        }
+
+        // --- MODALES AUX ---
+        function openConfirmModal(title, txt, cb) {
+            modalTitle.innerText = title;
+            modalBody.innerHTML = `<p>${txt}</p>`;
+            modalBtnConfirm.style.display = 'inline-block';
+            modalBtnCancel.innerText = 'Cancelar';
+            modalBtnConfirm.onclick = () => { cb(); closeModal(); };
+            modal.style.display = 'flex';
+        }
+        function openModal(title, html) {
+            modalTitle.innerText = title;
+            modalBody.innerHTML = html;
+            modalBtnConfirm.style.display = 'none';
+            modalBtnCancel.innerText = 'Cerrar';
+            modal.style.display = 'flex';
+        }
+        function closeModal() { modal.style.display = 'none'; }
+
+        async function viewAntecedentes(id, name) {
+            openModal(`Historial: ${name}`, 'Cargando...');
+            try {
+                const res = await apiFetch(`/paciente/${id}/antecedentes`);
+                const a = res.antecedentes || {};
+                modalBody.innerHTML = `<h3>Antecedentes</h3>
+                    <p><strong>Alergias:</strong> ${a.alergias || 'No'}</p>
+                    <p><strong>Crónicas:</strong> ${a.condicion_cronica || 'No'}</p>
+                    <p><strong>Cirugías:</strong> ${a.cirugia_previa || 'No'}</p>
+                    <p><strong>Meds:</strong> ${a.medicamentos_actuales || 'No'}</p>`;
+            } catch(e) { modalBody.innerHTML = 'Error.'; }
+        }
+    </script>
 </body>
 </html>
