@@ -12,7 +12,7 @@ const multer = require('multer');
 // ********************************************
 // -> AÑADIR ESTO: IMPORTACIÓN DEL MÓDULO RENAL
 // ********************************************
-const renalRoutes = require('./renal_module/renal_routes'); 
+
 // ********************************************
 
 
@@ -3380,6 +3380,7 @@ app.listen(PORT, () => {
     console.log('----------------------------------------------------');
 
 });
+
 
 
 
