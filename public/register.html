@@ -522,7 +522,7 @@
                     */
                 }
                 
-                showFeedback('Procesando registro...', 'success');
+                showFeedback('¡Registro exitoso! Su cuenta está pendiente de activación.', 'success');
 
                 // 3. Envío a la API
                 try {
@@ -547,7 +547,7 @@
                         
                         setTimeout(() => {
                             window.location.href = 'login.html';
-                        }, 3000);
+                        }, 7000);
                     } else {
                         showFeedback('Error: ' + (result.msg || 'Intente de nuevo.'), 'error');
                     }
