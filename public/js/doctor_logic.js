@@ -1,4 +1,4 @@
-    <script>
+   
         // --- INICIALIZACIÓN DE LIBRERÍA PDF ---
         const { jsPDF } = window.jspdf;
         // ----------------------------------------
@@ -1016,4 +1016,4 @@
             openModal(`Detalle de Visita (ID: ${visita.id_visita})`, bodyHtml);
         }
 
-    </script>
+   
